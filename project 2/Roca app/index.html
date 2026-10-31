@@ -31,23 +31,20 @@
         .row input, .row select { flex: 1; }
         .btn-whatsapp { background: #25D366 !important; margin-top: 5px; }
         .btn-sms { background: #0288D1 !important; margin-top: 5px; }
+        .btn-audit { background: #673AB7 !important; margin-bottom: 10px; }
         
-        /* Vifungo vya Ndogo kwenye Orodha */
         .btn-sm { padding: 4px 8px; font-size: 12px; width: auto; margin-left: 5px; }
         .btn-edit { background: #ff9800; color: #000; }
         .btn-del { background: #d32f2f; }
 
-        /* Orodha ya Kutafutia (Autocomplete Dropdown) */
         .search-container { position: relative; margin-bottom: 10px; }
         .search-results { position: absolute; background: white; border: 1px solid #ccc; border-top: none; border-radius: 0 0 5px 5px; max-height: 150px; overflow-y: auto; width: 100%; z-index: 99; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .search-item { padding: 9px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 14px; background: #fff; }
         .search-item:hover { background: #eef2f7; font-weight: bold; }
 
-        /* Upau wa Kubadili Modi ya Duka / Admin */
         .mode-bar { background: #003366; padding: 10px; border-radius: 8px; color: white; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
         .mode-bar button { width: auto; padding: 6px 12px; font-size: 13px; background: #4CAF50; color: #fff; }
 
-        /* Mitindo ya Jedwali */
         .table-container { display: flex; gap: 10px; overflow-x: auto; }
         .table-half { flex: 1; min-width: 170px; }
         table { width: 100%; border-collapse: collapse; margin-top: 5px; font-size: 12px; }
@@ -59,7 +56,6 @@
 </head>
 <body>
 
-    <!-- KICHWA CHA KUBADILI MODI -->
     <div class="mode-bar">
         <span id="modeTitle" style="font-weight: bold;">Modi: Muuzaji / Dukani (Bili za Chakula)</span>
         <button id="modeBtn" onclick="toggleStaffMode()">Ingia kama Msimamizi</button>
@@ -67,7 +63,14 @@
 
     <h2>Roca Investment (Online)</h2>
 
-    <!-- 1. USAJILI WA WAFUGAJI (Admin Tu) -->
+    <!-- KITUFE CHA UKAGUZI WA DATA ZILIZOPUNGUA (Admin Tu) -->
+    <div class="card admin-only" style="background: #f3e5f5;">
+        <h3>Kitufe cha Ukaguzi wa Data (Audit Check)</h3>
+        <button class="btn-audit" onclick="runDataAudit()">Kagua Mapungufu ya Lita na Bei (Mwezi Huu)</button>
+        <div class="summary" id="auditResultArea" style="background: #fff; display:none; margin-top: 8px;"></div>
+    </div>
+
+    <!-- 1. USAJILI WA WAFUGAJI -->
     <div class="card admin-only">
         <h3>1. Usajili na Usimamizi wa Wafugaji</h3>
         <input type="text" id="fName" placeholder="Jina la Mfugaji">
@@ -76,7 +79,7 @@
         <div id="farmersList" class="summary" style="margin-top:10px;"></div>
     </div>
 
-    <!-- 2 & 3. JEDWALI LA MAZIWA YA MFUGAJI & BEI (Admin Tu) -->
+    <!-- 2 & 3. JEDWALI LA MAZIWA YA MFUGAJI & BEI -->
     <div class="card admin-only">
         <h3>2 & 3. Jedwali la Maziwa ya Mfugaji & Bei</h3>
         
@@ -88,16 +91,14 @@
 
         <div class="row">
             <select id="tableFarmerSelect" onchange="loadFarmerMonthTable()"></select>
-            <select id="selectMonth" onchange="loadFarmerMonthTable()">
-                <option value="1">Januari</option><option value="2">Februari</option><option value="3">Machi</option>
-                <option value="4">Aprili</option><option value="5">Mei</option><option value="6">Juni</option>
-                <option value="7">Julai</option><option value="8">Agosti</option><option value="9">Septemba</option>
-                <option value="10">Oktoba</option><option value="11">Novemba</option><option value="12">Desemba</option>
-            </select>
+            <select id="selectMonth" onchange="loadFarmerMonthTable()"></select>
         </div>
         
-        <label style="font-size: 13px; font-weight: bold; color: #555;">Bei ya Kununulia kwa Lita (Manual & Auto-save):</label>
-        <input type="number" id="globalPrice" placeholder="Weka bei hapa (mf. 1000)" oninput="savePriceManual()">
+        <label style="font-size: 13px; font-weight: bold; color: #555;">Bei ya Kununulia kwa Lita (Manual Entry):</label>
+        <div class="row">
+            <input type="number" id="globalPrice" placeholder="Weka bei hapa (mf. 1000)">
+            <button onclick="savePriceManual()" style="width: auto; background: #385723;">Hifadhi Bei</button>
+        </div>
 
         <div class="table-container" id="calendarTableContainer"></div>
         <div class="summary" id="tableTotalsSummary" style="margin-top: 10px; font-weight: bold;">
@@ -105,16 +106,11 @@
         </div>
     </div>
 
-    <!-- JUMLA KUU YA MAZIWA YA WAFUGAJI WOTE (Admin Tu) -->
+    <!-- JUMLA KUU YA MAZIWA YA WAFUGAJI WOTE -->
     <div class="card admin-only" style="background: #e8f4fd;">
         <h3>Ripoti: Jumla Kuu ya Maziwa ya Wafugaji Wote</h3>
         <div class="row">
-            <select id="allFarmersMonth" onchange="loadAllFarmersTotals()">
-                <option value="1">Januari</option><option value="2">Februari</option><option value="3">Machi</option>
-                <option value="4">Aprili</option><option value="5">Mei</option><option value="6">Juni</option>
-                <option value="7">Julai</option><option value="8">Agosti</option><option value="9">Septemba</option>
-                <option value="10">Oktoba</option><option value="11">Novemba</option><option value="12">Desemba</option>
-            </select>
+            <select id="allFarmersMonth" onchange="loadAllFarmersTotals()"></select>
         </div>
         <div class="table-container" id="allFarmersTableContainer" style="margin-top: 8px;"></div>
         <div class="summary" id="allFarmersGrandTotal" style="margin-top: 10px; font-weight: bold;">
@@ -134,7 +130,7 @@
 
         <select id="deductFarmerSelect" onchange="loadFarmerDeductions()"></select>
         
-        <div class="admin-only">
+        <div>
             <select id="deductType">
                 <option value="cash">Pesa ya Advance (Cash)</option>
                 <option value="feed" selected>Dhamana ya Chakula cha Ng'ombe</option>
@@ -149,7 +145,7 @@
         <div class="summary" id="deductionsListArea" style="margin-top: 10px;">Chagua mfugaji kuona historia ya makato na tarehe zake...</div>
     </div>
 
-    <!-- INVOICE REPORT NA KUTUMA MESSAGING (Admin Tu) -->
+    <!-- INVOICE REPORT NA KUTUMA MESSAGING -->
     <div class="card admin-only">
         <h3>Invoice / Ripoti ya Malipo ya Mfugaji</h3>
         
@@ -167,7 +163,7 @@
         </div>
     </div>
 
-    <!-- WATEJA WANUNUZI (Admin Tu) -->
+    <!-- WATEJA WANUNUZI -->
     <div class="card admin-only">
         <h3>6, 7 & 8. Mauzo na Malipo ya Cash ya Mnunuzi</h3>
         <input type="text" id="cName" placeholder="Jina la Mnunuzi/Mteja">
@@ -184,16 +180,14 @@
 
         <div class="row">
             <select id="customerTableSelect" onchange="loadCustomerMonthTable()"></select>
-            <select id="customerSelectMonth" onchange="loadCustomerMonthTable()">
-                <option value="1">Januari</option><option value="2">Februari</option><option value="3">Machi</option>
-                <option value="4">Aprili</option><option value="5">Mei</option><option value="6">Juni</option>
-                <option value="7">Julai</option><option value="8">Agosti</option><option value="9">Septemba</option>
-                <option value="10">Oktoba</option><option value="11">Novemba</option><option value="12">Desemba</option>
-            </select>
+            <select id="customerSelectMonth" onchange="loadCustomerMonthTable()"></select>
         </div>
         
-        <label style="font-size: 13px; font-weight: bold; color: #555;">Bei ya Kuuzia kwa Lita:</label>
-        <input type="number" id="customerGlobalPrice" placeholder="Weka bei ya kuuzia hapa" oninput="saveCustomerPriceManual()">
+        <label style="font-size: 13px; font-weight: bold; color: #555;">Bei ya Kuuzia kwa Lita (Manual Entry):</label>
+        <div class="row">
+            <input type="number" id="customerGlobalPrice" placeholder="Weka bei ya kuuzia hapa">
+            <button onclick="saveCustomerPriceManual()" style="width: auto; background: #385723;">Hifadhi Bei</button>
+        </div>
         
         <div class="table-container" id="customerTableContainer"></div>
         <div class="summary" id="customerTotalsSummary" style="margin-top: 10px; font-weight: bold;">
@@ -211,7 +205,7 @@
         </div>
     </div>
 
-    <!-- MATUMIZI YA BIASHARA (Admin Tu) -->
+    <!-- MATUMIZI YA BIASHARA -->
     <div class="card admin-only">
         <h3>Matumizi ya Biashara (Expenses)</h3>
         <input type="text" id="expDesc" placeholder="Aina ya Matumizi">
@@ -223,15 +217,18 @@
         <div class="summary" id="expensesListArea" style="margin-top: 10px;">Hakuna matumizi...</div>
     </div>
 
-    <!-- FAIDA (Admin Tu) -->
+    <!-- FAIDA (OTOMATIKI) -->
     <div class="card profit admin-only">
-        <h3>9. Ripoti ya Faida na Hasara</h3>
-        <button onclick="calculateProfitReport()" style="background: #385723;">Onyesha Ripoti Kamili ya Faida</button>
-        <div class="summary profit" id="profitArea" style="margin-top:8px; background: transparent;">Bonyeza kitufe hapo juu kuona ripoti...</div>
+        <h3>9. Ripoti ya Faida na Hasara (Otomatiki)</h3>
+        <div class="row" style="margin-bottom: 10px;">
+            <select id="profitMonthSelect" onchange="calculateProfitReport()"></select>
+        </div>
+        <div class="summary profit" id="profitArea" style="background: transparent;">
+            Inatafuta taarifa na kuhesabu faida...
+        </div>
     </div>
 
 <script>
-    // BIN ID NA API KEY YAKO YA JSONBIN ZIMESHAWEKWA HAPA:
     const BIN_ID = "6ae500eeac6210605a5fd048"; 
     const API_KEY = "$2a$10$c3Qjxtl7dF3ZPAqxJzv5R.G0uNI4gAR7gTY6K9nAihFQ0snbgIjNi";
 
@@ -248,6 +245,7 @@
     };
 
     let now = new Date();
+    let currentYear = now.getFullYear();
     let currentMonth = now.getMonth() + 1;
     let todayStr = now.toISOString().split('T')[0];
 
@@ -255,17 +253,42 @@
     document.getElementById('expDate').value = todayStr;
     document.getElementById('cCashDate').value = todayStr;
 
-    document.getElementById('selectMonth').value = currentMonth;
-    document.getElementById('allFarmersMonth').value = currentMonth;
-    document.getElementById('customerSelectMonth').value = currentMonth;
-
     let currentInvoiceText = "";
     let currentFarmerPhone = "";
-    
-    // Anza moja kwa moja kwenye Modi ya Duka (Staff) bila PIN
     let isStaffMode = true;
 
-    // KUVUTA DATA KUTOKA MTANDAONI (JSONBin)
+    function populateDynamicMonths() {
+        let monthNames = ["Januari", "Februari", "Machi", "Aprili", "Mei", "Juni", "Julai", "Agosti", "Septemba", "Oktoba", "Novemba", "Desemba"];
+        let selects = ['selectMonth', 'allFarmersMonth', 'customerSelectMonth', 'profitMonthSelect'];
+
+        selects.forEach(selId => {
+            let el = document.getElementById(selId);
+            if(el) {
+                el.innerHTML = '';
+                for(let m = 1; m <= 12; m++) {
+                    let valueStr = `${currentYear}-${m < 10 ? '0' + m : m}`;
+                    let labelStr = `${monthNames[m-1]} ${currentYear}`;
+                    let opt = document.createElement('option');
+                    opt.value = valueStr;
+                    opt.text = labelStr;
+                    if(m === currentMonth) opt.selected = true;
+                    el.appendChild(opt);
+                }
+            }
+        });
+    }
+
+    function getDaysInSelectedMonth(monthSelectId) {
+        let sel = document.getElementById(monthSelectId);
+        if(!sel || !sel.value) {
+            return new Date(currentYear, currentMonth, 0).getDate();
+        }
+        let parts = sel.value.split('-');
+        let year = parseInt(parts[0]);
+        let month = parseInt(parts[1]);
+        return new Date(year, month, 0).getDate();
+    }
+
     function loadDataFromCloud() {
         fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
             headers: { 'X-Master-Key': API_KEY }
@@ -274,6 +297,7 @@
         .then(data => {
             if (data && data.record) {
                 db = data.record;
+                populateDynamicMonths();
                 updateDropdowns();
                 applyModeView();
                 console.log("Data zimepakiwa kutoka mtandaoni!");
@@ -282,8 +306,27 @@
         .catch(error => console.error("Hitilafu katika kupata data:", error));
     }
 
-    // KUHIFADHI DATA KWENDA MTANDAONI (JSONBin)
-    function saveData() {
+    let saveTimeout = null;
+    function saveDataDebounced() {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': API_KEY
+                },
+                body: JSON.stringify(db)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log("Data zimejihifadhi zenyewe mtandaoni!");
+            })
+            .catch(error => console.error("Hitilafu katika kuhifadhi data:", error));
+        }, 1000);
+    }
+
+    function saveDataNow() {
         fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
             method: 'PUT',
             headers: {
@@ -294,13 +337,97 @@
         })
         .then(response => response.json())
         .then(data => {
-            console.log("Data zimehifadhiwa mtandaoni!");
             updateDropdowns();
         })
         .catch(error => console.error("Hitilafu katika kuhifadhi data:", error));
     }
 
-    // Kubadili kati ya Staff na Admin (PIN inatumika tu ukitaka kuingia Admin)
+    // KITENGO CHA UKAGUZI WA MAPUNGUFU (AUDIT CHECK)
+    function runDataAudit() {
+        let monthStr = document.getElementById('selectMonth').value;
+        let totalDays = getDaysInSelectedMonth('selectMonth');
+        let auditArea = document.getElementById('auditResultArea');
+        auditArea.style.display = 'block';
+
+        let missingPricesFarmers = [];
+        let missingMilkFarmers = [];
+        let missingPricesCustomers = [];
+        let missingMilkCustomers = [];
+
+        // 1. Kagua Wafugaji (Bei na Lita)
+        db.farmers.forEach(f => {
+            let priceKey = `${f.id}_${monthStr}`;
+            if (!db.prices[priceKey] || db.prices[priceKey] <= 0) {
+                missingPricesFarmers.push(f.name);
+            }
+
+            let missingDaysCount = 0;
+            for(let day = 1; day <= totalDays; day++) {
+                let rKey = `${f.id}_${monthStr}_${day}`;
+                let rec = db.milkRecords[rKey];
+                let morVal = rec ? rec.mor : '';
+                let eveVal = rec ? rec.eve : '';
+                if(morVal === '' || eveVal === '' || morVal === null || eveVal === null) {
+                    missingDaysCount++;
+                }
+            }
+            if(missingDaysCount > 0) {
+                missingMilkFarmers.push(`${f.name} (Bado siku ${missingDaysCount})`);
+            }
+        });
+
+        // 2. Kagua Wateja Wanunuzi (Bei na Lita)
+        db.customers.forEach(c => {
+            let cPriceKey = `${c.id}_${monthStr}`;
+            if (!db.customerPrices[cPriceKey] || db.customerPrices[cPriceKey] <= 0) {
+                missingPricesCustomers.push(c.name);
+            }
+
+            let missingDaysCust = 0;
+            for(let day = 1; day <= totalDays; day++) {
+                let rKey = `${c.id}_${monthStr}_${day}`;
+                let rec = db.customerSales[rKey];
+                let morVal = rec ? rec.mor : '';
+                let eveVal = rec ? rec.eve : '';
+                if(morVal === '' || eveVal === '' || morVal === null || eveVal === null) {
+                    missingDaysCust++;
+                }
+            }
+            if(missingDaysCust > 0) {
+                missingMilkCustomers.push(`${c.name} (Bado siku ${missingDaysCust})`);
+            }
+        });
+
+        // Tengeneza ripoti ya ujumbe
+        let html = `<b>MATOKEO YA UKAGUZI (Mwezi: ${monthStr}):</b><br><hr>`;
+
+        if(missingPricesFarmers.length > 0) {
+            html += `<span style="color: red;">❌ Wafugaji Wasiowekewa Bei ya Kununulia:</span><br>• ${missingPricesFarmers.join(', ')}<br><br>`;
+        } else {
+            html += `<span style="color: green;">✅ Wafugaji wote wamewekewa bei ya kununulia.</span><br><br>`;
+        }
+
+        if(missingMilkFarmers.length > 0) {
+            html += `<span style="color: red;">❌ Wafugaji Wenye Lita Zilizopungua (Asubuhi/Jioni):</span><br>• ${missingMilkFarmers.join('<br>• ')}<br><br>`;
+        } else {
+            html += `<span style="color: green;">✅ Wafugaji wote wamejazwa lita kamili.</span><br><br>`;
+        }
+
+        if(missingPricesCustomers.length > 0) {
+            html += `<span style="color: red;">❌ Wanunuzi Wasiowekewa Bei ya Kuuzia:</span><br>• ${missingPricesCustomers.join(', ')}<br><br>`;
+        } else {
+            html += `<span style="color: green;">✅ Wanunuzi wote wamewekewa bei ya kuuzia.</span><br><br>`;
+        }
+
+        if(missingMilkCustomers.length > 0) {
+            html += `<span style="color: red;">❌ Wanunuzi Wenye Lita Zilizopungua za Mauzo:</span><br>• ${missingMilkCustomers.join('<br>• ')}<br>`;
+        } else {
+            html += `<span style="color: green;">✅ Mauzo ya wateja wote yamekamilika.</span>`;
+        }
+
+        auditArea.innerHTML = html;
+    }
+
     function toggleStaffMode() {
         if (isStaffMode) {
             let password = prompt("Weka neno la siri la Msimamizi (Admin):");
@@ -311,7 +438,6 @@
                 alert("Neno la siri si sahihi!");
             }
         } else {
-            // Kutoka Admin kurudi Staff hakuhitaji PIN
             isStaffMode = true;
             applyModeView();
         }
@@ -345,7 +471,7 @@
         db.farmers.push({ id: Date.now(), name, phone });
         document.getElementById('fName').value = '';
         document.getElementById('fPhone').value = '';
-        saveData();
+        saveDataNow();
         alert('Mfugaji amesajiliwa!');
     }
 
@@ -358,7 +484,7 @@
             if(newPhone !== null) {
                 farmer.name = newName.trim();
                 farmer.phone = newPhone.trim();
-                saveData();
+                saveDataNow();
                 alert("Taarifa za mfugaji zimehaririwa kikamilifu!");
             }
         }
@@ -367,7 +493,7 @@
     function deleteFarmer(id) {
         if(confirm("Je, una uhakika unataka kumfuta mfugaji huyu?")) {
             db.farmers = db.farmers.filter(f => f.id != id);
-            saveData();
+            saveDataNow();
             alert("Mfugaji amefutwa!");
         }
     }
@@ -379,7 +505,7 @@
         db.customers.push({ id: Date.now(), name, phone });
         document.getElementById('cName').value = '';
         document.getElementById('cPhone').value = '';
-        saveData();
+        saveDataNow();
         alert('Mnunuzi amesajiliwa!');
     }
 
@@ -392,7 +518,7 @@
             if(newPhone !== null) {
                 customer.name = newName.trim();
                 customer.phone = newPhone.trim();
-                saveData();
+                saveDataNow();
                 alert("Taarifa za mnunuzi zimehaririwa kikamilifu!");
             }
         }
@@ -401,7 +527,7 @@
     function deleteCustomer(id) {
         if(confirm("Je, una uhakika unataka kumfuta mnunuzi huyu?")) {
             db.customers = db.customers.filter(c => c.id != id);
-            saveData();
+            saveDataNow();
             alert("Mnunuzi amefutwa!");
         }
     }
@@ -411,6 +537,11 @@
         let fDeductSel = document.getElementById('deductFarmerSelect');
         let fCalcSel = document.getElementById('calcFarmerSelect');
         let custTableSel = document.getElementById('customerTableSelect');
+
+        let currentFarmerVal = fTableSel ? fTableSel.value : '';
+        let currentDeductVal = fDeductSel ? fDeductSel.value : '';
+        let currentCalcVal = fCalcSel ? fCalcSel.value : '';
+        let currentCustVal = custTableSel ? custTableSel.value : '';
 
         if(fTableSel) fTableSel.innerHTML = '<option value="">-- Chagua Mfugaji --</option>';
         if(fDeductSel) fDeductSel.innerHTML = '<option value="">-- Chagua Mfugaji --</option>';
@@ -445,12 +576,18 @@
         let customersListEl = document.getElementById('customersList');
         if(customersListEl) customersListEl.innerHTML = customerListHTML;
 
+        if(fTableSel) fTableSel.value = currentFarmerVal;
+        if(fDeductSel) fDeductSel.value = currentDeductVal;
+        if(fCalcSel) fCalcSel.value = currentCalcVal;
+        if(custTableSel) custTableSel.value = currentCustVal;
+
         loadFarmerMonthTable();
         loadCustomerMonthTable();
         loadFarmerDeductions();
         loadCustomerCashHistory();
         loadExpensesList();
         loadAllFarmersTotals();
+        calculateProfitReport();
     }
 
     function filterList(inputId, resultsId, selectId, callbackFunc, dataSource) {
@@ -496,29 +633,33 @@
 
     function savePriceManual() {
         let farmerId = document.getElementById('tableFarmerSelect').value;
-        let month = document.getElementById('selectMonth').value;
+        let monthStr = document.getElementById('selectMonth').value;
         let price = parseFloat(document.getElementById('globalPrice').value) || 0;
-        if(!farmerId) return;
-        db.prices[`${farmerId}_${month}`] = price;
-        saveData();
+        if(!farmerId) return alert('Chagua mfugaji kwanza!');
+        db.prices[`${farmerId}_${monthStr}`] = price;
+        saveDataNow();
         updateTableTotals();
+        calculateProfitReport();
+        alert('Bei imehifadhiwa kikamilifu!');
     }
 
     function saveCustomerPriceManual() {
         let customerId = document.getElementById('customerTableSelect').value;
-        let month = document.getElementById('customerSelectMonth').value;
+        let monthStr = document.getElementById('customerSelectMonth').value;
         let price = parseFloat(document.getElementById('customerGlobalPrice').value) || 0;
-        if(!customerId) return;
-        db.customerPrices[`${customerId}_${month}`] = price;
-        saveData();
+        if(!customerId) return alert('Chagua mnunuzi kwanza!');
+        db.customerPrices[`${customerId}_${monthStr}`] = price;
+        saveDataNow();
         updateCustomerTableTotals();
+        calculateProfitReport();
+        alert('Bei ya kuuzia imehifadhiwa!');
     }
 
     function loadFarmerMonthTable() {
         let fSel = document.getElementById('tableFarmerSelect');
         if(!fSel || fSel.offsetParent === null) return;
         let farmerId = fSel.value;
-        let month = document.getElementById('selectMonth').value;
+        let monthStr = document.getElementById('selectMonth').value;
         let container = document.getElementById('calendarTableContainer');
 
         if(!farmerId) {
@@ -526,14 +667,17 @@
             return;
         }
 
-        let priceKey = `${farmerId}_${month}`;
+        let priceKey = `${farmerId}_${monthStr}`;
         document.getElementById('globalPrice').value = db.prices[priceKey] || '';
+
+        let totalDays = getDaysInSelectedMonth('selectMonth');
+        let midPoint = Math.ceil(totalDays / 2);
 
         let html1 = `<div class="table-half"><table><tr><th>Siku</th><th>Mor</th><th>Eve</th></tr>`;
         let html2 = `<div class="table-half"><table><tr><th>Siku</th><th>Mor</th><th>Eve</th></tr>`;
 
-        for(let day = 1; day <= 31; day++) {
-            let recordKey = `${farmerId}_${month}_${day}`;
+        for(let day = 1; day <= totalDays; day++) {
+            let recordKey = `${farmerId}_${monthStr}_${day}`;
             let data = db.milkRecords[recordKey] || { mor: '', eve: '' };
             
             let rowHTML = `<tr>
@@ -542,7 +686,7 @@
                 <td><input type="number" value="${data.eve}" oninput="saveMilkCell(${day}, 'eve', this.value)"></td>
             </tr>`;
 
-            if(day <= 16) html1 += rowHTML;
+            if(day <= midPoint) html1 += rowHTML;
             else html2 += rowHTML;
         }
 
@@ -555,28 +699,30 @@
 
     function saveMilkCell(day, type, val) {
         let farmerId = document.getElementById('tableFarmerSelect').value;
-        let month = document.getElementById('selectMonth').value;
-        let recordKey = `${farmerId}_${month}_${day}`;
+        let monthStr = document.getElementById('selectMonth').value;
+        let recordKey = `${farmerId}_${monthStr}_${day}`;
 
         if(!db.milkRecords[recordKey]) db.milkRecords[recordKey] = { mor: '', eve: '' };
         db.milkRecords[recordKey][type] = val === '' ? '' : parseFloat(val);
 
-        saveData();
         updateTableTotals();
         loadAllFarmersTotals();
+        calculateProfitReport();
+        saveDataDebounced();
     }
 
     function updateTableTotals() {
         let fSel = document.getElementById('tableFarmerSelect');
         if(!fSel || fSel.offsetParent === null) return;
         let farmerId = fSel.value;
-        let month = document.getElementById('selectMonth').value;
+        let monthStr = document.getElementById('selectMonth').value;
         let price = parseFloat(document.getElementById('globalPrice').value) || 0;
         if(!farmerId) return;
 
+        let totalDays = getDaysInSelectedMonth('selectMonth');
         let totalLiters = 0;
-        for(let day = 1; day <= 31; day++) {
-            let recordKey = `${farmerId}_${month}_${day}`;
+        for(let day = 1; day <= totalDays; day++) {
+            let recordKey = `${farmerId}_${monthStr}_${day}`;
             let data = db.milkRecords[recordKey];
             if(data) {
                 totalLiters += (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
@@ -590,17 +736,20 @@
     function loadAllFarmersTotals() {
         let container = document.getElementById('allFarmersTableContainer');
         if(!container || container.offsetParent === null) return;
-        let month = document.getElementById('allFarmersMonth').value;
+        let monthStr = document.getElementById('allFarmersMonth').value;
+
+        let totalDays = getDaysInSelectedMonth('allFarmersMonth');
+        let midPoint = Math.ceil(totalDays / 2);
 
         let html1 = `<div class="table-half"><table><tr><th>Siku</th><th>Mor</th><th>Eve</th><th>Jumla</th></tr>`;
         let html2 = `<div class="table-half"><table><tr><th>Siku</th><th>Mor</th><th>Eve</th><th>Jumla</th></tr>`;
 
         let grandMor = 0, grandEve = 0;
 
-        for(let day = 1; day <= 31; day++) {
+        for(let day = 1; day <= totalDays; day++) {
             let dayMor = 0, dayEve = 0;
             db.farmers.forEach(f => {
-                let rKey = `${f.id}_${month}_${day}`;
+                let rKey = `${f.id}_${monthStr}_${day}`;
                 let rec = db.milkRecords[rKey];
                 if(rec) {
                     dayMor += parseFloat(rec.mor) || 0;
@@ -618,7 +767,7 @@
                 <td><b>${dayTotal > 0 ? dayTotal : '-'}</b></td>
             </tr>`;
 
-            if(day <= 16) html1 += rowHTML;
+            if(day <= midPoint) html1 += rowHTML;
             else html2 += rowHTML;
         }
 
@@ -642,7 +791,7 @@
         if(!farmerId || amount <= 0 || !date) return alert('Chagua mfugaji na uweke kiasi sahihi cha pesa!');
         
         db.deductions.push({ id: Date.now(), farmerId, type, amount, date });
-        saveData();
+        saveDataNow();
         document.getElementById('deductAmount').value = '';
         loadFarmerDeductions();
         alert('Bili ya chakula imehifadhiwa kikamilifu!');
@@ -657,7 +806,8 @@
             if(newDate !== null && newDate.trim() !== "") {
                 item.amount = parseFloat(newAmount);
                 item.date = newDate.trim();
-                saveData();
+                saveDataNow();
+                loadFarmerDeductions();
                 alert("Bili imerekebishwa!");
             }
         }
@@ -666,7 +816,8 @@
     function deleteDeduction(id) {
         if(confirm("Je, una uhakika unataka kufuta bili hii?")) {
             db.deductions = db.deductions.filter(d => d.id != id);
-            saveData();
+            saveDataNow();
+            loadFarmerDeductions();
             alert("Bili imefutwa!");
         }
     }
@@ -691,9 +842,8 @@
         let totalCash = 0, totalFeed = 0;
         items.forEach(i => {
             let label = i.type === 'cash' ? 'Advance Cash' : 'Chakula cha Ng\'ombe';
-            let editDelDeduct = !isStaffMode ? 
-                `<button class="btn-sm btn-edit" onclick="editDeduction(${i.id})">Badili</button>` +
-                `<button class="btn-sm btn-del" onclick="deleteDeduction(${i.id})">Futa</button>` : '';
+            let editDelDeduct = `<button class="btn-sm btn-edit" onclick="editDeduction(${i.id})">Badili</button>` +
+                                `<button class="btn-sm btn-del" onclick="deleteDeduction(${i.id})">Futa</button>`;
 
             html += `- [${i.date}] ${label}: TZS ${i.amount.toLocaleString()} ${editDelDeduct}<br>`;
             if(i.type === 'cash') totalCash += i.amount;
@@ -707,8 +857,7 @@
         let fSel = document.getElementById('calcFarmerSelect');
         if(!fSel || fSel.offsetParent === null) return;
         let farmerId = fSel.value;
-        let month = document.getElementById('selectMonth').value;
-        let monthNames = ["", "Januari", "Februari", "Machi", "Aprili", "Mei", "Juni", "Julai", "Agosti", "Septemba", "Oktoba", "Novemba", "Desemba"];
+        let monthStr = document.getElementById('selectMonth').value;
 
         if(!farmerId) {
             document.getElementById('sendActionButtons').style.display = 'none';
@@ -718,11 +867,12 @@
         let farmer = db.farmers.find(f => f.id == farmerId);
         currentFarmerPhone = farmer ? farmer.phone : "";
 
-        let price = db.prices[`${farmerId}_${month}`] || 0;
+        let price = db.prices[`${farmerId}_${monthStr}`] || 0;
+        let totalDays = getDaysInSelectedMonth('selectMonth');
         let totalLiters = 0;
 
-        for(let day = 1; day <= 31; day++) {
-            let recordKey = `${farmerId}_${month}_${day}`;
+        for(let day = 1; day <= totalDays; day++) {
+            let recordKey = `${farmerId}_${monthStr}_${day}`;
             let data = db.milkRecords[recordKey];
             if(data) {
                 totalLiters += (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
@@ -741,7 +891,8 @@
 
         document.getElementById('farmerResultArea').innerHTML = `
             <b>Mfugaji:</b> ${farmer.name}<br>
-            <b>Jumla ya Lita (${monthNames[month]}):</b> ${totalLiters} L<br>
+            <b>Mwezi:</b> ${monthStr}<br>
+            <b>Jumla ya Lita:</b> ${totalLiters} L<br>
             <b>Thamani ya Maziwa (@ TZS ${price}):</b> TZS ${totalMilkValue.toLocaleString()}<br>
             <b>Makato ya Advance Cash:</b> TZS ${totalCash.toLocaleString()}<br>
             <b>Makato ya Chakula:</b> TZS ${totalFeed.toLocaleString()}<br>
@@ -753,7 +904,7 @@
 
         currentInvoiceText = `ROCA INVESTMENT - INVOICE YA MALIPO\n` +
             `Mfugaji: ${farmer.name}\n` +
-            `Mwezi: ${monthNames[month]}\n` +
+            `Mwezi: ${monthStr}\n` +
             `Jumla ya Maziwa: ${totalLiters} Lita\n` +
             `Thamani ya Maziwa: TZS ${totalMilkValue.toLocaleString()}\n` +
             `Advance Cash: TZS ${totalCash.toLocaleString()}\n` +
@@ -782,7 +933,7 @@
 
     function loadCustomerMonthTable() {
         let customerId = document.getElementById('customerTableSelect').value;
-        let month = document.getElementById('customerSelectMonth').value;
+        let monthStr = document.getElementById('customerSelectMonth').value;
         let container = document.getElementById('customerTableContainer');
 
         if(!customerId) {
@@ -790,14 +941,17 @@
             return;
         }
 
-        let priceKey = `${customerId}_${month}`;
+        let priceKey = `${customerId}_${monthStr}`;
         document.getElementById('customerGlobalPrice').value = db.customerPrices[priceKey] || '';
+
+        let totalDays = getDaysInSelectedMonth('customerSelectMonth');
+        let midPoint = Math.ceil(totalDays / 2);
 
         let html1 = `<div class="table-half"><table><tr><th>Siku</th><th>Mor</th><th>Eve</th></tr>`;
         let html2 = `<div class="table-half"><table><tr><th>Siku</th><th>Mor</th><th>Eve</th></tr>`;
 
-        for(let day = 1; day <= 31; day++) {
-            let recordKey = `${customerId}_${month}_${day}`;
+        for(let day = 1; day <= totalDays; day++) {
+            let recordKey = `${customerId}_${monthStr}_${day}`;
             let data = db.customerSales[recordKey] || { mor: '', eve: '' };
             
             let rowHTML = `<tr>
@@ -806,7 +960,7 @@
                 <td><input type="number" value="${data.eve}" oninput="saveCustomerCell(${day}, 'eve', this.value)"></td>
             </tr>`;
 
-            if(day <= 16) html1 += rowHTML;
+            if(day <= midPoint) html1 += rowHTML;
             else html2 += rowHTML;
         }
 
@@ -819,14 +973,15 @@
 
     function saveCustomerCell(day, type, val) {
         let customerId = document.getElementById('customerTableSelect').value;
-        let month = document.getElementById('customerSelectMonth').value;
-        let recordKey = `${customerId}_${month}_${day}`;
+        let monthStr = document.getElementById('customerSelectMonth').value;
+        let recordKey = `${customerId}_${monthStr}_${day}`;
 
         if(!db.customerSales[recordKey]) db.customerSales[recordKey] = { mor: '', eve: '' };
         db.customerSales[recordKey][type] = val === '' ? '' : parseFloat(val);
 
-        saveData();
         updateCustomerTableTotals();
+        calculateProfitReport();
+        saveDataDebounced();
     }
 
     function saveCustomerCashPayment() {
@@ -837,7 +992,7 @@
         if(!customerId || amount <= 0 || !date) return alert('Jaza taarifa sahihi za cash!');
 
         db.customerPayments.push({ id: Date.now(), customerId, amount, date });
-        saveData();
+        saveDataNow();
         document.getElementById('cCashAmount').value = '';
         loadCustomerCashHistory();
         alert('Malipo ya cash yamerekodiwa!');
@@ -869,13 +1024,14 @@
 
     function updateCustomerTableTotals() {
         let customerId = document.getElementById('customerTableSelect').value;
-        let month = document.getElementById('customerSelectMonth').value;
+        let monthStr = document.getElementById('customerSelectMonth').value;
         let price = parseFloat(document.getElementById('customerGlobalPrice').value) || 0;
         if(!customerId) return;
 
+        let totalDays = getDaysInSelectedMonth('customerSelectMonth');
         let totalLiters = 0;
-        for(let day = 1; day <= 31; day++) {
-            let recordKey = `${customerId}_${month}_${day}`;
+        for(let day = 1; day <= totalDays; day++) {
+            let recordKey = `${customerId}_${monthStr}_${day}`;
             let data = db.customerSales[recordKey];
             if(data) {
                 totalLiters += (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
@@ -903,10 +1059,11 @@
         if(!desc || amount <= 0 || !date) return alert('Jaza maelezo na kiasi!');
 
         db.expenses.push({ id: Date.now(), desc, amount, date });
-        saveData();
+        saveDataNow();
         document.getElementById('expDesc').value = '';
         document.getElementById('expAmount').value = '';
         loadExpensesList();
+        calculateProfitReport();
         alert('Matumizi yamerekodiwa!');
     }
 
@@ -929,48 +1086,65 @@
     }
 
     function calculateProfitReport() {
+        let area = document.getElementById('profitArea');
+        let profitMonthSel = document.getElementById('profitMonthSelect');
+        if(!area || !profitMonthSel) return;
+        
+        let selectedMonth = profitMonthSel.value;
+
         let totalBuyingCost = 0;
         for(let key in db.milkRecords) {
             let parts = key.split('_');
             let farmerId = parts[0];
-            let month = parts[1];
-            let price = db.prices[`${farmerId}_${month}`] || 0;
-            let data = db.milkRecords[key];
-            let l = (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
-            totalBuyingCost += l * price;
+            let monthStr = parts[1];
+            
+            if(monthStr === selectedMonth) {
+                let price = db.prices[`${farmerId}_${monthStr}`] || 0;
+                let data = db.milkRecords[key];
+                let l = (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
+                totalBuyingCost += l * price;
+            }
         }
 
         let totalSalesRevenue = 0;
         for(let key in db.customerSales) {
             let parts = key.split('_');
             let customerId = parts[0];
-            let month = parts[1];
-            let price = db.customerPrices[`${customerId}_${month}`] || 0;
-            let data = db.customerSales[key];
-            let l = (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
-            totalSalesRevenue += l * price;
+            let monthStr = parts[1];
+            
+            if(monthStr === selectedMonth) {
+                let price = db.customerPrices[`${customerId}_${monthStr}`] || 0;
+                let data = db.customerSales[key];
+                let l = (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
+                totalSalesRevenue += l * price;
+            }
         }
 
         let grossProfit = totalSalesRevenue - totalBuyingCost;
+
         let totalExpenses = 0;
-        db.expenses.forEach(e => { totalExpenses += e.amount; });
+        db.expenses.forEach(e => {
+            if(e.date && e.date.startsWith(selectedMonth)) {
+                totalExpenses += e.amount;
+            }
+        });
+
         let netProfit = grossProfit - totalExpenses;
 
-        document.getElementById('profitArea').innerHTML = `
-            <b>Gharama za Kununulia Maziwa:</b> TZS ${totalBuyingCost.toLocaleString()}<br>
-            <b>Mapato ya Kuuzia Maziwa:</b> TZS ${totalSalesRevenue.toLocaleString()}<br>
-            <b>Gross Profit:</b> TZS ${grossProfit.toLocaleString()}<br>
-            <b>Matumizi ya Biashara:</b> TZS ${totalExpenses.toLocaleString()}<br>
+        area.innerHTML = `
+            <b>Mwezi Uliochaguliwa:</b> ${selectedMonth}<br>
+            <b>Jumla ya Gharama za Kununulia Maziwa:</b> TZS ${totalBuyingCost.toLocaleString()}<br>
+            <b>Jumla ya Mapato ya Kuuzia Maziwa:</b> TZS ${totalSalesRevenue.toLocaleString()}<br>
+            <b>Faida Ghafi (Gross Profit):</b> TZS ${grossProfit.toLocaleString()}<br>
+            <b>Jumla ya Matumizi ya Mwezi Huu:</b> TZS ${totalExpenses.toLocaleString()}<br>
             <hr>
             <b style="color: ${netProfit >= 0 ? 'green' : 'red'}; font-size: 16px;">
-                FAIDA HALISI: TZS ${netProfit.toLocaleString()}
+                FAIDA HALISI (NET PROFIT): TZS ${netProfit.toLocaleString()}
             </b>
         `;
     }
 
-    // Pakia data kutoka mtandaoni na anza moja kwa moja kwenye modi ya duka
     loadDataFromCloud();
-    applyModeView();
 </script>
 </body>
 </html>
