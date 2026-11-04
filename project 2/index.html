@@ -1,17 +1,4 @@
 <!DOCTYPE html>
-<html>
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title></title>
-</head>
-
-<body>
-  
-</body>
-
-</html><!DOCTYPE html>
 <html lang="sw">
 <head>
     <meta charset="UTF-8">
@@ -37,7 +24,35 @@
         .btn-edit { background: #ff9800; color: #000; }
         .btn-del { background: #d32f2f; }
 
-        /* FOLDER ACCORDION STYLE */
+        /* LOGIN SCREEN OVERLAY */
+        #loginOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 51, 102, 0.98);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .login-box {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 340px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .login-box h3 { color: #003366; margin-bottom: 15px; }
+        .login-box input { width: 100%; padding: 10px; margin-bottom: 12px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .login-box button { background: #003366; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        
+        .tab-buttons { display: flex; gap: 5px; margin-bottom: 12px; }
+        .tab-buttons button { background: #e0e0e0; color: #333; font-size: 13px; padding: 8px; }
+        .tab-buttons button.active { background: #003366; color: white; }
+
+        .admin-settings-card { background: #fff3e0; border-left: 4px solid #ff9800; padding: 10px; margin-bottom: 12px; border-radius: 6px; }
+
         details.folder-box { background: #fafbfc; border: 1px solid #d1d5db; border-radius: 6px; padding: 8px 12px; margin-top: 10px; }
         details.folder-box summary { font-weight: bold; color: #003366; cursor: pointer; font-size: 14px; outline: none; }
         .folder-content { margin-top: 8px; padding-top: 8px; border-top: 1px solid #e5e7eb; font-size: 13px; max-height: 200px; overflow-y: auto; }
@@ -61,27 +76,89 @@
 </head>
 <body>
 
+    <!-- LOGIN SCREEN -->
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h3>Roca Investment Login</h3>
+            <div class="tab-buttons">
+                <button id="tabAdminBtn" class="active" onclick="switchLoginTab('admin')">Admin Mkuu</button>
+                <button id="tabStaffBtn" onclick="switchLoginTab('staff')">Wafanyakazi</button>
+            </div>
+
+            <!-- ADMIN LOGIN -->
+            <div id="adminLoginForm">
+                <input type="text" id="loginAdminUser" placeholder="Jina la Admin (Default: prince)..." autocomplete="username">
+                <input type="password" id="loginAdminPinInput" placeholder="PIN ya Admin (Default: 1998)..." autocomplete="current-password">
+                <button onclick="verifyAdminLogin()">Ingia kama Admin</button>
+            </div>
+
+            <!-- STAFF LOGIN -->
+            <div id="staffLoginForm" style="display:none;">
+                <input type="text" id="loginStaffUser" placeholder="Jina la Kuingia (Username)..." autocomplete="username">
+                <input type="password" id="loginStaffPin" placeholder="PIN yako..." autocomplete="current-password">
+                <button onclick="verifyStaffLogin()">Ingia Kazini</button>
+            </div>
+        </div>
+    </div>
+
     <div class="mode-bar">
-        <span id="modeTitle" style="font-weight: bold;">Modi:  Dukani (Bili za Chakula)</span>
-        <button id="modeBtn" onclick="toggleStaffMode()">Ingia kama Msimamizi</button>
+        <span id="modeTitle" style="font-weight: bold;">Modi: Mfanyakazi</span>
+        <button id="modeBtn" onclick="requestSwitchToAdmin()">Badili kwenda Admin</button>
     </div>
 
     <h2>Roca Investment (Online)</h2>
 
-    <!-- KITUFE CHA UKAGUZI WA DATA ZA LEO (Audit Check) -->
-    <div class="card admin-only" style="background: #f3e5f5;">
-        <h3>Kitufe cha Ukaguzi wa Data za Tarehe Husika (Audit Check)</h3>
-        <div class="row" style="margin-bottom: 8px;">
-            <label style="font-size: 13px; font-weight: bold; align-self: center;">Chagua Tarehe ya Kukagua:</label>
-            <input type="date" id="auditDateInput" onchange="runDataAudit()">
+    <!-- CLOUD SYNC STATUS BAR -->
+    <div class="card" style="background: #e8f4fd; text-align: center; padding: 10px; border-left: 4px solid #0288D1;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <small id="syncStatus" style="color: #0288D1; font-weight: bold; font-size: 13px;">☁️ Hali: Tayari</small>
+            <button onclick="manualSyncToCloud()" style="width: auto; background: #0288D1; padding: 5px 10px; font-size: 12px;">🔄 Sawazisha Sasa</button>
         </div>
-        <button class="btn-audit" onclick="runDataAudit()">Kagua Lita Zilizopungua kwa Tarehe Hii</button>
-        <div class="summary" id="auditResultArea" style="background: #fff; display:none; margin-top: 8px;"></div>
     </div>
 
-    <!-- 1. USAJILI WA WAFUGAJI -->
-    <div class="card admin-only">
-        <h3>1. Usajili na Usimamizi wa Wafugaji</h3>
+    <!-- ADMIN: USIMAMIZI WA CREDENTIALS ZA ADMIN & WAFANYAKAZI -->
+    <div class="card admin-only admin-settings-card">
+        <h3>Usimamizi wa Credentials (Admin Pekee)</h3>
+        
+        <b style="font-size: 13px; color: #003366;">1. Badilisha Jina na PIN ya Admin Mkuu:</b>
+        <input type="text" id="newAdminUser" placeholder="Jina jipya la Admin (mf. prince)...">
+        <input type="password" id="newAdminPin" placeholder="PIN mpya ya Admin (mf. 1998)...">
+        <button onclick="updateAdminCredentials()" style="background: #ff9800; color: #000; margin-bottom: 10px;">Hifadhi Credentials za Admin</button>
+
+        <hr>
+
+        <b style="font-size: 13px; color: #003366;">2. Sajili / Badilisha Staff (Muuza Duka & Msimamizi wa Kituo):</b>
+        <select id="manageStaffType" style="margin-top: 5px;">
+            <option value="shopStaff">Muuza Duka (Shop Staff)</option>
+            <option value="stationStaff">Msimamizi wa Kituo (Milk Station Staff)</option>
+        </select>
+        <input type="text" id="manageStaffUser" placeholder="Jina la Kuingia (Username) la Staff...">
+        <input type="password" id="manageStaffPin" placeholder="PIN ya Staff...">
+        <button onclick="saveStaffCredentials()" style="background: #385723;">Hifadhi Taarifa za Staff</button>
+
+        <!-- FOLDA YA KEY -->
+        <details class="folder-box">
+            <summary>📁 Folda ya key (Majina na PIN za Wafanyakazi Wote)</summary>
+            <div class="folder-content" style="max-height: none;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px; background: #fff;">
+                    <thead>
+                        <tr style="background: #003366; color: white;">
+                            <th style="padding: 6px; border: 1px solid #ccc;">Aina ya Staff</th>
+                            <th style="padding: 6px; border: 1px solid #ccc;">Jina la Kuingia</th>
+                            <th style="padding: 6px; border: 1px solid #ccc;">PIN ya Sasa</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staffCredentialsTableBody">
+                        <!-- Data zitajazwa otomatiki -->
+                    </tbody>
+                </table>
+            </div>
+        </details>
+    </div>
+
+    <!-- 1. USAJILI WA WAFUGAJI (Admin & Milk Station Staff) -->
+    <div class="card" id="cardFarmerRegistration">
+        <h3>Usajili na Usimamizi wa Wafugaji</h3>
         <input type="text" id="fName" placeholder="Jina la Mfugaji">
         <input type="text" id="fPhone" placeholder="Namba ya Simu (mf. 0712345678)">
         <button onclick="addFarmer()">Hifadhi Mfugaji</button>
@@ -93,9 +170,13 @@
     </div>
 
     <!-- 2 & 3. JEDWALI LA MAZIWA YA MFUGAJI & BEI -->
-    <div class="card admin-only">
-        <h3>2 & 3. Jedwali la Maziwa ya Mfugaji & Bei</h3>
+    <div class="card" id="cardMilkTable">
+        <h3>Jedwali la Maziwa ya Mfugaji & Bei (Asubuhi na Jioni)</h3>
         
+        <!-- AUDIT CHECK BUTTON -->
+        <button class="btn-audit" onclick="runAuditCheck('farmer')">🔍 Kikagua Mfumo (Wafugaji kwa Tarehe)</button>
+        <div id="farmerAuditResult" class="summary" style="display:none; margin-bottom: 10px; background: #fff3cd; border-left: 4px solid #ff9800;"></div>
+
         <div class="search-container">
             <label style="font-size: 13px; font-weight: bold; color: #555;">Tafuta Jina la Mfugaji kwa Haraka:</label>
             <input type="text" id="farmerSearchInput" placeholder="Anza kuandika jina hapa..." oninput="filterList('farmerSearchInput', 'searchResults', 'tableFarmerSelect', loadFarmerMonthTable, db.farmers)" autocomplete="off">
@@ -107,10 +188,10 @@
             <select id="selectMonth" onchange="loadFarmerMonthTable()"></select>
         </div>
         
-        <label style="font-size: 13px; font-weight: bold; color: #555;">Bei ya Kununulia kwa Lita (Manual Entry):</label>
-        <div class="row">
-            <input type="number" id="globalPrice" placeholder="Weka bei hapa (mf. 1000)">
-            <button onclick="savePriceManual()" style="width: auto; background: #385723;">Hifadhi Bei</button>
+        <label class="admin-only" style="font-size: 13px; font-weight: bold; color: #555;">Bei ya Kununulia kwa Lita (Admin Pekee):</label>
+        <div class="row admin-only">
+            <input type="number" id="globalFarmerPrice" placeholder="Weka bei mpya hapa (mf. 1000)">
+            <button onclick="saveGlobalFarmerPrice()" style="width: auto; background: #385723;">Hifadhi Bei kwa Wote</button>
         </div>
 
         <div class="table-container" id="calendarTableContainer"></div>
@@ -120,7 +201,7 @@
     </div>
 
     <!-- JUMLA KUU YA MAZIWA YA WAFUGAJI WOTE -->
-    <div class="card admin-only" style="background: #e8f4fd;">
+    <div class="card" id="cardAllFarmersTotals" style="background: #e8f4fd;">
         <h3>Ripoti: Jumla Kuu ya Maziwa ya Wafugaji Wote</h3>
         <div class="row">
             <select id="allFarmersMonth" onchange="loadAllFarmersTotals()"></select>
@@ -131,35 +212,52 @@
         </div>
     </div>
 
-    <!-- 4 & 5. ADVANCE CASH NA CHAKULA CHA NG'OMBE -->
+    <!-- 4 & 5. ADVANCE CASH NA BILI YA CHAKULA & RIPOTI YA MFUGAJI -->
     <div class="card">
-        <h3>4 & 5. Advance Cash & Bili ya Chakula</h3>
+        <h3>Advance Cash, Bili ya Chakula & Ripoti ya Mfugaji</h3>
         
         <div class="search-container">
-            <label style="font-size: 13px; font-weight: bold; color: #555;">Tafuta Mfugaji kwa Haraka (Advance & Chakula):</label>
+            <label style="font-size: 13px; font-weight: bold; color: #555;">Tafuta Mfugaji kwa Haraka:</label>
             <input type="text" id="deductSearchInput" placeholder="Anza kuandika jina hapa..." oninput="filterList('deductSearchInput', 'deductSearchResults', 'deductFarmerSelect', loadFarmerDeductions, db.farmers)" autocomplete="off">
             <div id="deductSearchResults" class="search-results" style="display:none;"></div>
         </div>
 
-        <select id="deductFarmerSelect" onchange="loadFarmerDeductions()"></select>
+        <div class="row">
+            <select id="deductFarmerSelect" onchange="loadFarmerDeductions()"></select>
+            <select id="staffViewMonthSelect" onchange="loadFarmerDeductions()"></select>
+        </div>
         
-        <div>
-            <select id="deductType">
-                <option value="cash">Pesa ya Advance (Cash)</option>
-                <option value="feed" selected>Dhamana ya Chakula cha Ng'ombe</option>
-            </select>
+        <!-- ADVANCE CASH (Station Staff & Admin) -->
+        <div style="background: #eaf2f8; border: 1px dashed #2980b9; padding: 10px; border-radius: 6px; margin-top: 8px;" id="cardAdvanceCash">
+            <b style="color: #2980b9; font-size: 13px;">Toa Pesa ya Advance Cash:</b>
+            <div class="row" style="margin-top: 6px;">
+                <input type="number" id="advanceCashAmount" placeholder="Kiasi cha Advance (TZS)">
+                <input type="date" id="advanceCashDate">
+            </div>
+            <button onclick="saveAdvanceCash()" style="background: #2980b9;">Hifadhi Advance Cash</button>
         </div>
 
-        <div class="row">
-            <input type="number" id="deductAmount" placeholder="Kiasi cha Pesa ya Chakula (TZS)">
-            <input type="date" id="deductDate">
+        <!-- BILI YA CHAKULA (Shop Staff & Admin) -->
+        <div style="background: #fdfefe; border: 1px dashed #003366; padding: 10px; border-radius: 6px; margin-top: 8px;" id="cardFeedDeduction">
+            <b style="color: #003366; font-size: 13px;">Ongeza Bili ya Chakula cha Ng'ombe (Muuza Duka & Admin):</b>
+            <div class="row" style="margin-top: 6px;">
+                <input type="number" id="deductAmount" placeholder="Kiasi cha Pesa (TZS)">
+                <input type="date" id="deductDate">
+            </div>
+            <button onclick="saveFeedDeduction()" style="background: #385723;">Hifadhi Bili ya Chakula</button>
         </div>
-        <button onclick="saveDeduction()">Hifadhi Bili ya Chakula</button>
-        <div class="summary" id="deductionsListArea" style="margin-top: 10px;">Chagua mfugaji kuona historia ya makato na tarehe zake...</div>
+
+        <div class="summary" id="staffFarmerReportArea" style="margin-top: 10px; background: #e8f4fd;">
+            Chagua mfugaji kuona ripoti yake ya lita za mwezi mzima na salio analodai...
+        </div>
+
+        <div class="summary" id="deductionsListArea" style="margin-top: 10px;">
+            Historia ya bili na advance zitaonekana hapa...
+        </div>
     </div>
 
     <!-- INVOICE REPORT NA KUTUMA MESSAGING -->
-    <div class="card admin-only">
+    <div class="card" id="cardInvoiceSection">
         <h3>Invoice / Ripoti ya Malipo ya Mfugaji</h3>
         
         <div class="search-container">
@@ -177,18 +275,24 @@
     </div>
 
     <!-- WATEJA WANUNUZI -->
-    <div class="card admin-only">
-        <h3>6, 7 & 8. Mauzo na Malipo ya Cash ya Mnunuzi</h3>
-        <input type="text" id="cName" placeholder="Jina la Mnunuzi/Mteja">
-        <input type="text" id="cPhone" placeholder="Namba ya Simu ya Mnunuzi">
-        <button onclick="addCustomer()">Hifadhi Mnunuzi</button>
+    <div class="card" id="cardCustomerSection">
+        <h3>Mauzo na Malipo ya Cash ya Mnunuzi</h3>
         
-        <details class="folder-box">
-            <summary>📁 Folda ya Wateja Wanunuzi Wote</summary>
-            <div id="customersFolderContent" class="folder-content">Inapakia folda...</div>
-        </details>
-        
-        <hr style="margin-top: 15px;">
+        <!-- AUDIT CHECK BUTTON FOR CUSTOMERS -->
+        <button class="btn-audit" onclick="runAuditCheck('customer')">🔍 Kikagua Mfumo (Wateja/Wanunuzi kwa Tarehe)</button>
+        <div id="customerAuditResult" class="summary" style="display:none; margin-bottom: 10px; background: #fff3cd; border-left: 4px solid #ff9800;"></div>
+
+        <div class="admin-only">
+            <input type="text" id="cName" placeholder="Jina la Mnunuzi/Mteja">
+            <input type="text" id="cPhone" placeholder="Namba ya Simu ya Mnunuzi">
+            <button onclick="addCustomer()">Hifadhi Mnunuzi</button>
+            
+            <details class="folder-box">
+                <summary>📁 Folda ya Wateja Wanunuzi Wote</summary>
+                <div id="customersFolderContent" class="folder-content">Inapakia folda...</div>
+            </details>
+            <hr style="margin-top: 15px;">
+        </div>
         
         <div class="search-container">
             <label style="font-size: 13px; font-weight: bold; color: #555;">Tafuta Mnunuzi kwa Haraka (Mauzo & Cash):</label>
@@ -201,8 +305,8 @@
             <select id="customerSelectMonth" onchange="loadCustomerMonthTable()"></select>
         </div>
         
-        <label style="font-size: 13px; font-weight: bold; color: #555;">Bei ya Kuuzia kwa Lita (Manual Entry):</label>
-        <div class="row">
+        <label class="admin-only" style="font-size: 13px; font-weight: bold; color: #555;">Bei ya Kuuzia kwa Lita (Admin Pekee):</label>
+        <div class="row admin-only">
             <input type="number" id="customerGlobalPrice" placeholder="Weka bei ya kuuzia hapa">
             <button onclick="saveCustomerPriceManual()" style="width: auto; background: #385723;">Hifadhi Bei</button>
         </div>
@@ -223,6 +327,18 @@
         </div>
     </div>
 
+    <!-- RIPOTI KUU YA MAUZI NA MADENI YA WANUNUZI (ADMIN PEKEE) -->
+    <div class="card admin-only" style="background: #e8f4fd; border-left: 4px solid #003366;">
+        <h3>Ripoti Kuu: Jumla ya Mauzo na Madeni ya Wanunuzi Wote</h3>
+        <div class="row">
+            <select id="allCustomersReportMonth" onchange="loadAllCustomersReport()"></select>
+        </div>
+        <div class="table-container" id="allCustomersReportTableContainer" style="margin-top: 8px;"></div>
+        <div class="summary" id="allCustomersGrandSummary" style="margin-top: 10px; font-weight: bold;">
+            Jumla Kuu ya Mauzo: 0 L | Bili: TZS 0 | Imelipwa: TZS 0 | Salio la Kudai: TZS 0
+        </div>
+    </div>
+
     <!-- MATUMIZI YA BIASHARA -->
     <div class="card admin-only">
         <h3>Matumizi ya Biashara (Expenses)</h3>
@@ -237,7 +353,7 @@
 
     <!-- FAIDA (OTOMATIKI) -->
     <div class="card profit admin-only">
-        <h3>9. Ripoti ya Faida na Hasara (Otomatiki)</h3>
+        <h3>Ripoti ya Faida na Hasara (Otomatiki)</h3>
         <div class="row" style="margin-bottom: 10px;">
             <select id="profitMonthSelect" onchange="calculateProfitReport()"></select>
         </div>
@@ -254,12 +370,17 @@
         farmers: [],
         milkRecords: {},
         prices: {},
-        deduction: [],
+        deductions: [],
         customers: [],
         customerSales: {},
         customerPrices: {},
         customerPayments: [],
-        expenses: []
+        expenses: [],
+        credentials: {
+            admin: { user: "prince", pin: "1998" },
+            shopStaff: { user: "shopstaff", pin: "1234" },
+            stationStaff: { user: "stationstaff", pin: "1234" }
+        }
     };
 
     let now = new Date();
@@ -268,17 +389,190 @@
     let todayStr = now.toISOString().split('T')[0];
 
     document.getElementById('deductDate').value = todayStr;
+    document.getElementById('advanceCashDate').value = todayStr;
     document.getElementById('expDate').value = todayStr;
     document.getElementById('cCashDate').value = todayStr;
-    document.getElementById('auditDateInput').value = todayStr;
 
     let currentInvoiceText = "";
     let currentFarmerPhone = "";
-    let isStaffMode = true;
+    let currentUserRole = "";
+
+    function switchLoginTab(tab) {
+        document.getElementById('tabAdminBtn').classList.remove('active');
+        document.getElementById('tabStaffBtn').classList.remove('active');
+        document.getElementById('adminLoginForm').style.display = 'none';
+        document.getElementById('staffLoginForm').style.display = 'none';
+
+        if(tab === 'admin') {
+            document.getElementById('tabAdminBtn').classList.add('active');
+            document.getElementById('adminLoginForm').style.display = 'block';
+        } else {
+            document.getElementById('tabStaffBtn').classList.add('active');
+            document.getElementById('staffLoginForm').style.display = 'block';
+        }
+    }
+
+    function verifyAdminLogin() {
+        let enteredUser = document.getElementById('loginAdminUser').value.trim().toLowerCase();
+        let enteredPin = document.getElementById('loginAdminPinInput').value.trim();
+        let adminCreds = db.credentials?.admin || { user: "prince", pin: "1998" };
+
+        if(enteredUser === adminCreds.user.toLowerCase() && enteredPin === adminCreds.pin) {
+            currentUserRole = 'admin';
+            document.getElementById('loginOverlay').style.display = 'none';
+            applyRolePermissions();
+            alert("Umeingia kama Admin Mkuu!");
+        } else {
+            alert("Jina la Admin au PIN si sahihi!");
+            document.getElementById('loginAdminPinInput').value = '';
+        }
+    }
+
+    function verifyStaffLogin() {
+        let enteredUser = document.getElementById('loginStaffUser').value.trim().toLowerCase();
+        let enteredPin = document.getElementById('loginStaffPin').value.trim();
+
+        if(!enteredUser || !enteredPin) return alert('Weka Jina na PIN yako!');
+
+        let shopCreds = db.credentials?.shopStaff || { user: "shopstaff", pin: "1234" };
+        let stationCreds = db.credentials?.stationStaff || { user: "stationstaff", pin: "1234" };
+
+        if(enteredUser === shopCreds.user.toLowerCase() && enteredPin === shopCreds.pin) {
+            currentUserRole = 'shopStaff';
+            document.getElementById('loginOverlay').style.display = 'none';
+            applyRolePermissions();
+            alert("Umeingia kama Muuza Duka (Shop Staff)!");
+        } else if(enteredUser === stationCreds.user.toLowerCase() && enteredPin === stationCreds.pin) {
+            currentUserRole = 'stationStaff';
+            document.getElementById('loginOverlay').style.display = 'none';
+            applyRolePermissions();
+            alert("Umeingia kama Msimamizi wa Kituo (Milk Station Staff)!");
+        } else {
+            alert("Jina la Staff au PIN si sahihi!");
+            document.getElementById('loginStaffPin').value = '';
+        }
+    }
+
+    function requestSwitchToAdmin() {
+        let user = prompt("Weka Jina la Admin Mkuu (mf. prince):");
+        let pin = prompt("Weka PIN ya Admin Mkuu (mf. 1998):");
+        let adminCreds = db.credentials?.admin || { user: "prince", pin: "1998" };
+
+        if(user && user.trim().toLowerCase() === adminCreds.user.toLowerCase() && pin === adminCreds.pin) {
+            currentUserRole = 'admin';
+            applyRolePermissions();
+            alert("Umebadilisha kwenda Modi ya Admin Mkuu!");
+        } else if(user !== null) {
+            alert("Jina la Admin au PIN si sahihi!");
+        }
+    }
+
+    function updateAdminCredentials() {
+        let newUser = document.getElementById('newAdminUser').value.trim();
+        let newPin = document.getElementById('newAdminPin').value.trim();
+        if(!newUser || !newPin) return alert("Jaza jina jipya na PIN mpya ya Admin!");
+
+        if(confirm("Je, una uhakika unataka kubadilisha credentials za Admin?")) {
+            if(!db.credentials) db.credentials = {};
+            db.credentials.admin = { user: newUser, pin: newPin };
+            document.getElementById('newAdminUser').value = '';
+            document.getElementById('newAdminPin').value = '';
+            saveDataNow();
+            loadStaffCredentialsTable();
+            alert("Credentials za Admin zimebadilishwa kikamilifu!");
+        }
+    }
+
+    function saveStaffCredentials() {
+        let staffType = document.getElementById('manageStaffType').value;
+        let newUser = document.getElementById('manageStaffUser').value.trim();
+        let newPin = document.getElementById('manageStaffPin').value.trim();
+
+        if(!newUser || !newPin) return alert("Jaza jina na PIN ya staff!");
+
+        if(!db.credentials) db.credentials = {};
+        db.credentials[staffType] = { user: newUser, pin: newPin };
+
+        document.getElementById('manageStaffUser').value = '';
+        document.getElementById('manageStaffPin').value = '';
+        saveDataNow();
+        loadStaffCredentialsTable();
+        alert("Taarifa za staff zimehifadhiwa kwa mafanikio!");
+    }
+
+    function loadStaffCredentialsTable() {
+        let tbody = document.getElementById('staffCredentialsTableBody');
+        if(!tbody || tbody.offsetParent === null) return;
+
+        let shopCreds = db.credentials?.shopStaff || { user: "shopstaff", pin: "1234" };
+        let stationCreds = db.credentials?.stationStaff || { user: "stationstaff", pin: "1234" };
+        let adminCreds = db.credentials?.admin || { user: "prince", pin: "1998" };
+
+        tbody.innerHTML = `
+            <tr>
+                <td style="padding: 6px; border: 1px solid #ccc; font-weight: bold;">Admin Mkuu</td>
+                <td style="padding: 6px; border: 1px solid #ccc;">${adminCreds.user}</td>
+                <td style="padding: 6px; border: 1px solid #ccc;">${adminCreds.pin}</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px; border: 1px solid #ccc;">Muuza Duka (Shop Staff)</td>
+                <td style="padding: 6px; border: 1px solid #ccc;">${shopCreds.user}</td>
+                <td style="padding: 6px; border: 1px solid #ccc;">${shopCreds.pin}</td>
+            </tr>
+            <tr>
+                <td style="padding: 6px; border: 1px solid #ccc;">Msimamizi wa Kituo (Milk Station)</td>
+                <td style="padding: 6px; border: 1px solid #ccc;">${stationCreds.user}</td>
+                <td style="padding: 6px; border: 1px solid #ccc;">${stationCreds.pin}</td>
+            </tr>
+        `;
+    }
+
+    function applyRolePermissions() {
+        let adminCards = document.querySelectorAll('.admin-only');
+        let modeTitle = document.getElementById('modeTitle');
+        let cardFeedDeduction = document.getElementById('cardFeedDeduction');
+        let cardAdvanceCash = document.getElementById('cardAdvanceCash');
+        let cardFarmerRegistration = document.getElementById('cardFarmerRegistration');
+        let cardMilkTable = document.getElementById('cardMilkTable');
+        let cardAllFarmersTotals = document.getElementById('cardAllFarmersTotals');
+        let cardCustomerSection = document.getElementById('cardCustomerSection');
+
+        if(currentUserRole === 'admin') {
+            adminCards.forEach(c => c.style.display = 'block');
+            cardFeedDeduction.style.display = 'block';
+            cardAdvanceCash.style.display = 'block';
+            cardFarmerRegistration.style.display = 'block';
+            cardMilkTable.style.display = 'block';
+            cardAllFarmersTotals.style.display = 'block';
+            cardCustomerSection.style.display = 'block';
+            modeTitle.innerText = "Modi: Admin Mkuu (prince)";
+            loadStaffCredentialsTable();
+            loadAllCustomersReport();
+        } else if(currentUserRole === 'stationStaff') {
+            adminCards.forEach(c => c.style.display = 'none');
+            cardFeedDeduction.style.display = 'none';
+            cardAdvanceCash.style.display = 'block';
+            cardFarmerRegistration.style.display = 'block';
+            cardMilkTable.style.display = 'block';
+            cardAllFarmersTotals.style.display = 'block';
+            cardCustomerSection.style.display = 'block';
+            modeTitle.innerText = "Modi: Msimamizi wa Kituo cha Maziwa";
+        } else if(currentUserRole === 'shopStaff') {
+            adminCards.forEach(c => c.style.display = 'none');
+            cardFeedDeduction.style.display = 'block';
+            cardAdvanceCash.style.display = 'none';
+            cardFarmerRegistration.style.display = 'none';
+            cardMilkTable.style.display = 'none';
+            cardAllFarmersTotals.style.display = 'none';
+            cardCustomerSection.style.display = 'none';
+            modeTitle.innerText = "Modi: Muuzaji wa Duka (Bili za Chakula & Ripoti)";
+        }
+        updateDropdowns();
+    }
 
     function populateDynamicMonths() {
         let monthNames = ["Januari", "Februari", "Machi", "Aprili", "Mei", "Juni", "Julai", "Agosti", "Septemba", "Oktoba", "Novemba", "Desemba"];
-        let selects = ['selectMonth', 'allFarmersMonth', 'customerSelectMonth', 'profitMonthSelect'];
+        let selects = ['selectMonth', 'allFarmersMonth', 'customerSelectMonth', 'profitMonthSelect', 'staffViewMonthSelect', 'allCustomersReportMonth'];
 
         selects.forEach(selId => {
             let el = document.getElementById(selId);
@@ -316,12 +610,30 @@
         let localData = localStorage.getItem("roca_investment_db");
         if(localData) {
             try {
-                db = JSON.parse(localData);
-                populateDynamicMonths();
-                updateDropdowns();
-                applyModeView();
+                let parsed = JSON.parse(localData);
+                if(parsed) db = parsed;
             } catch(e) { console.error(e); }
         }
+
+        if(!db.deductions) db.deductions = [];
+        if(!db.farmers) db.farmers = [];
+        if(!db.milkRecords) db.milkRecords = {};
+        if(!db.prices) db.prices = {};
+        if(!db.customers) db.customers = [];
+        if(!db.customerSales) db.customerSales = {};
+        if(!db.customerPrices) db.customerPrices = {};
+        if(!db.customerPayments) db.customerPayments = [];
+        if(!db.expenses) db.expenses = [];
+        if(!db.credentials) {
+            db.credentials = {
+                admin: { user: "prince", pin: "1998" },
+                shopStaff: { user: "shopstaff", pin: "1234" },
+                stationStaff: { user: "stationstaff", pin: "1234" }
+            };
+        }
+
+        populateDynamicMonths();
+        updateDropdowns();
 
         fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
             headers: { 'X-Master-Key': API_KEY }
@@ -330,157 +642,90 @@
         .then(data => {
             if (data && data.record) {
                 db = data.record;
+                if(!db.deductions) db.deductions = [];
+                if(!db.farmers) db.farmers = [];
+                if(!db.milkRecords) db.milkRecords = {};
+                if(!db.prices) db.prices = {};
+                if(!db.customers) db.customers = [];
+                if(!db.customerSales) db.customerSales = {};
+                if(!db.customerPrices) db.customerPrices = {};
+                if(!db.customerPayments) db.customerPayments = [];
+                if(!db.expenses) db.expenses = [];
+                if(!db.credentials) {
+                    db.credentials = {
+                        admin: { user: "prince", pin: "1998" },
+                        shopStaff: { user: "shopstaff", pin: "1234" },
+                        stationStaff: { user: "stationstaff", pin: "1234" }
+                    };
+                }
+
                 localStorage.setItem("roca_investment_db", JSON.stringify(db));
                 populateDynamicMonths();
                 updateDropdowns();
-                applyModeView();
-                console.log("Data zimepakiwa na kusawazishwa kutoka mtandaoni!");
+                if(currentUserRole === 'admin') {
+                    loadStaffCredentialsTable();
+                    loadAllCustomersReport();
+                }
             }
         })
-        .catch(error => console.error("Kosa la mtandao, inatumia data zilizopo kwenye kifaa:", error));
+        .catch(error => console.error("Kosa la wingu:", error));
     }
 
     let saveTimeout = null;
     function saveDataDebounced() {
         clearTimeout(saveTimeout);
         localStorage.setItem("roca_investment_db", JSON.stringify(db));
-        saveTimeout = setTimeout(() => {
-            syncToCloud();
-        }, 1000);
+        saveTimeout = setTimeout(() => { syncToCloud(); }, 1000);
     }
 
     function saveDataNow() {
         localStorage.setItem("roca_investment_db", JSON.stringify(db));
         syncToCloud();
         updateDropdowns();
+        if(currentUserRole === 'admin') {
+            loadStaffCredentialsTable();
+            loadAllCustomersReport();
+        }
     }
 
     function syncToCloud() {
+        let statusEl = document.getElementById('syncStatus');
+        if(statusEl) statusEl.textContent = "☁️ Hali: Inatuma wingu...";
+
         fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Master-Key': API_KEY
-            },
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
             body: JSON.stringify(db)
         })
         .then(response => response.json())
-        .then(data => {
-            console.log("Data zimehifadhiwa salama mtandaoni!");
+        .then(() => {
+            if(statusEl) statusEl.textContent = "☁️ Hali: ✅ Data zimesawazishwa wingu";
         })
-        .catch(error => console.error("Hitilafu katika kuhifadhi data mtandaoni:", error));
+        .catch(() => { if(statusEl) statusEl.textContent = "☁️ Hali: ❌ Imeshindwa kutuma"; });
     }
 
-    function runDataAudit() {
-        let auditDate = document.getElementById('auditDateInput').value;
-        if (!auditDate) return alert('Chagua tarehe ya kukagua!');
-        
-        let parts = auditDate.split('-');
-        let year = parts[0];
-        let month = parts[1];
-        let day = parseInt(parts[2]);
-        let monthStr = `${year}-${month}`;
-
-        let auditArea = document.getElementById('auditResultArea');
-        auditArea.style.display = 'block';
-
-        let missingFarmersMor = [];
-        let missingFarmersEve = [];
-        let missingCustomersMor = [];
-        let missingCustomersEve = [];
-
-        // Kagua Wafugaji
-        db.farmers.forEach(f => {
-            let rKey = `${f.id}_${monthStr}_${day}`;
-            let rec = db.milkRecords[rKey];
-            
-            let morVal = rec ? rec.mor : '';
-            let eveVal = rec ? rec.eve : '';
-
-            if (morVal === '' || morVal === null || morVal === undefined) {
-                missingFarmersMor.push(f.name);
-            }
-            if (eveVal === '' || eveVal === null || eveVal === undefined) {
-                missingFarmersEve.push(f.name);
-            }
-        });
-
-        // Kagua Wanunuzi
-        db.customers.forEach(c => {
-            let rKey = `${c.id}_${monthStr}_${day}`;
-            let rec = db.customerSales[rKey];
-            
-            let morVal = rec ? rec.mor : '';
-            let eveVal = rec ? rec.eve : '';
-
-            if (morVal === '' || morVal === null || morVal === undefined) {
-                missingCustomersMor.push(c.name);
-            }
-            if (eveVal === '' || eveVal === null || eveVal === undefined) {
-                missingCustomersEve.push(c.name);
-            }
-        });
-
-        let html = `<b>MATOKEO YA UKAGUZI WA TAREHE: ${auditDate}</b><br><hr>`;
-        
-        // Wafugaji Asubuhi
-        if(missingFarmersMor.length > 0) html += `<span style="color: red;">❌ Wafugaji Wasiowekewa Lita za <u>Asubuhi</u>:</span><br>• ${missingFarmersMor.join(', ')}<br><br>`;
-        else html += `<span style="color: green;">✅ Wafugaji wote wamewekewa lita za asubuhi.</span><br><br>`;
-
-        // Wafugaji Jioni
-        if(missingFarmersEve.length > 0) html += `<span style="color: red;">❌ Wafugaji Wasiowekewa Lita za <u>Jioni</u>:</span><br>• ${missingFarmersEve.join(', ')}<br><br>`;
-        else html += `<span style="color: green;">✅ Wafugaji wote wamewekewa lita za jioni.</span><br><br>`;
-
-        // Wanunuzi Asubuhi
-        if(missingCustomersMor.length > 0) html += `<span style="color: red;">❌ Wanunuzi Wasiowekewa Mauzo ya <u>Asubuhi</u>:</span><br>• ${missingCustomersMor.join(', ')}<br><br>`;
-        else html += `<span style="color: green;">✅ Wanunuzi wote wamewekewa mauzo ya asubuhi.</span><br><br>`;
-
-        // Wanunuzi Jioni
-        if(missingCustomersEve.length > 0) html += `<span style="color: red;">❌ Wanunuzi Wasiowekewa Mauzo ya <u>Jioni</u>:</span><br>• ${missingCustomersEve.join(', ')}<br>`;
-        else html += `<span style="color: green;">✅ Wanunuzi wote wamewekewa mauzo ya jioni.</span>`;
-
-        auditArea.innerHTML = html;
+    function manualSyncToCloud() {
+        localStorage.setItem("roca_investment_db", JSON.stringify(db));
+        fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
+            body: JSON.stringify(db)
+        }).then(() => alert("Data zimesawazishwa kikamilifu wingu!"));
     }
 
-    function toggleStaffMode() {
-        if (isStaffMode) {
-            let password = prompt("Weka neno la siri la Msimamizi (Admin):");
-            if (password === "1234") {
-                isStaffMode = false;
-                applyModeView();
-            } else if (password !== null) {
-                alert("Neno la siri si sahihi!");
-            }
-        } else {
-            isStaffMode = true;
-            applyModeView();
-        }
-    }
-
-    function applyModeView() {
-        let adminCards = document.querySelectorAll('.admin-only');
-        let modeTitle = document.getElementById('modeTitle');
-        let modeBtn = document.getElementById('modeBtn');
-
-        if (isStaffMode) {
-            adminCards.forEach(card => card.style.display = 'none');
-            modeTitle.innerText = "Modi: Muuzaji / Dukani (Bili za Chakula)";
-            modeBtn.innerText = "Ingia kama Msimamizi";
-            modeBtn.style.background = "#4CAF50";
-            modeBtn.style.color = "#fff";
-        } else {
-            adminCards.forEach(card => card.style.display = 'block');
-            modeTitle.innerText = "Modi: Msimamizi Mkuu (Admin)";
-            modeBtn.innerText = "Rudi Modi ya Duka";
-            modeBtn.style.background = "#ff9800";
-            modeBtn.style.color = "#000";
-        }
-        updateDropdowns();
+    function saveGlobalFarmerPrice() {
+        let monthStr = document.getElementById('selectMonth').value;
+        let price = parseFloat(document.getElementById('globalFarmerPrice').value) || 1000;
+        if(price <= 0) return alert('Weka bei sahihi!');
+        db.farmers.forEach(f => { db.prices[`${f.id}_${monthStr}`] = price; });
+        saveDataNow();
+        updateTableTotals();
+        alert('Bei imehifadhiwa!');
     }
 
     function addFarmer() {
-        let name = document.getElementById('fName').value;
-        let phone = document.getElementById('fPhone').value;
+        let name = document.getElementById('fName').value.trim();
+        let phone = document.getElementById('fPhone').value.trim();
         if(!name) return alert('Weka jina la mfugaji!');
         db.farmers.push({ id: Date.now(), name, phone });
         document.getElementById('fName').value = '';
@@ -489,61 +734,15 @@
         alert('Mfugaji amesajiliwa!');
     }
 
-    function editFarmer(id) {
-        let farmer = db.farmers.find(f => f.id == id);
-        if(!farmer) return;
-        let newName = prompt("Badilisha Jina la Mfugaji:", farmer.name);
-        if(newName !== null && newName.trim() !== "") {
-            let newPhone = prompt("Badilisha Namba ya Simu ya Mfugaji:", farmer.phone || "");
-            if(newPhone !== null) {
-                farmer.name = newName.trim();
-                farmer.phone = newPhone.trim();
-                saveDataNow();
-                alert("Taarifa za mfugaji zimehaririwa kikamilifu!");
-            }
-        }
-    }
-
-    function deleteFarmer(id) {
-        if(confirm("Je, una uhakika unataka kumfuta mfugaji huyu?")) {
-            db.farmers = db.farmers.filter(f => f.id != id);
-            saveDataNow();
-            alert("Mfugaji amefutwa!");
-        }
-    }
-
     function addCustomer() {
-        let name = document.getElementById('cName').value;
-        let phone = document.getElementById('cPhone').value;
+        let name = document.getElementById('cName').value.trim();
+        let phone = document.getElementById('cPhone').value.trim();
         if(!name) return alert('Weka jina la mnunuzi!');
         db.customers.push({ id: Date.now(), name, phone });
         document.getElementById('cName').value = '';
         document.getElementById('cPhone').value = '';
         saveDataNow();
         alert('Mnunuzi amesajiliwa!');
-    }
-
-    function editCustomer(id) {
-        let customer = db.customers.find(c => c.id == id);
-        if(!customer) return;
-        let newName = prompt("Badilisha Jina la Mnunuzi:", customer.name);
-        if(newName !== null && newName.trim() !== "") {
-            let newPhone = prompt("Badilisha Namba ya Simu ya Mnunuzi:", customer.phone || "");
-            if(newPhone !== null) {
-                customer.name = newName.trim();
-                customer.phone = newPhone.trim();
-                saveDataNow();
-                alert("Taarifa za mnunuzi zimehaririwa kikamilifu!");
-            }
-        }
-    }
-
-    function deleteCustomer(id) {
-        if(confirm("Je, una uhakika unataka kumfuta mnunuzi huyu?")) {
-            db.customers = db.customers.filter(c => c.id != id);
-            saveDataNow();
-            alert("Mnunuzi amefutwa!");
-        }
     }
 
     function updateDropdowns() {
@@ -563,34 +762,22 @@
         if(custTableSel) custTableSel.innerHTML = '<option value="">-- Chagua Mnunuzi --</option>';
 
         let farmerListHTML = '';
-        if(db.farmers.length === 0) farmerListHTML = 'Hakuna wafugaji waliosajiliwa bado.<br>';
-        db.farmers.forEach(f => {
+        (db.farmers || []).forEach(f => {
             if(fTableSel) fTableSel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
             if(fDeductSel) fDeductSel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
             if(fCalcSel) fCalcSel.innerHTML += `<option value="${f.id}">${f.name}</option>`;
-            
-            let editDelButtons = !isStaffMode ? 
-                `<button class="btn-sm btn-edit" onclick="editFarmer(${f.id})">Hariri</button>` +
-                `<button class="btn-sm btn-del" onclick="deleteFarmer(${f.id})">Futa</button>` : '';
-
-            farmerListHTML += `• <b>${f.name}</b> (${f.phone || 'Hana namba'}) ${editDelButtons}<br>`;
+            farmerListHTML += `• <b>${f.name}</b> (${f.phone || 'Hana namba'})<br>`;
         });
         let folderContentEl = document.getElementById('farmersFolderContent');
         if(folderContentEl) folderContentEl.innerHTML = farmerListHTML;
 
         let customerListHTML = '';
-        if(db.customers.length === 0) customerListHTML = 'Hakuna wateja waliosajiliwa bado.<br>';
-        db.customers.forEach(c => {
+        (db.customers || []).forEach(c => {
             if(custTableSel) custTableSel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-            
-            let editDelCust = !isStaffMode ? 
-                `<button class="btn-sm btn-edit" onclick="editCustomer(${c.id})">Hariri</button>` +
-                `<button class="btn-sm btn-del" onclick="deleteCustomer(${c.id})">Futa</button>` : '';
-
-            customerListHTML += `• <b>${c.name}</b> (${c.phone || 'Hana namba'}) ${editDelCust}<br>`;
+            customerListHTML += `• <b>${c.name}</b> (${c.phone || 'Hana namba'})<br>`;
         });
-        let custFolderContentEl = document.getElementById('customersFolderContent');
-        if(custFolderContentEl) custFolderContentEl.innerHTML = customerListHTML;
+        let custFolderEl = document.getElementById('customersFolderContent');
+        if(custFolderEl) custFolderEl.innerHTML = customerListHTML;
 
         if(fTableSel) fTableSel.value = currentFarmerVal;
         if(fDeductSel) fDeductSel.value = currentDeductVal;
@@ -598,31 +785,24 @@
         if(custTableSel) custTableSel.value = currentCustVal;
 
         loadFarmerMonthTable();
-        loadCustomerMonthTable();
         loadFarmerDeductions();
+        loadAllFarmersTotals();
+        loadCustomerMonthTable();
         loadCustomerCashHistory();
         loadExpensesList();
-        loadAllFarmersTotals();
         calculateProfitReport();
+        if(currentUserRole === 'admin') {
+            loadStaffCredentialsTable();
+            loadAllCustomersReport();
+        }
     }
 
     function filterList(inputId, resultsId, selectId, callbackFunc, dataSource) {
         let input = document.getElementById(inputId).value.toLowerCase();
         let resultsBox = document.getElementById(resultsId);
-        
-        if (!input) {
-            resultsBox.style.display = 'none';
-            return;
-        }
-
-        let matched = dataSource.filter(item => item.name.toLowerCase().includes(input));
-
-        if (matched.length === 0) {
-            resultsBox.innerHTML = '<div class="search-item">Hakuna aliyepatikana</div>';
-            resultsBox.style.display = 'block';
-            return;
-        }
-
+        if (!input) { resultsBox.style.display = 'none'; return; }
+        let matched = (dataSource || []).filter(item => item.name.toLowerCase().includes(input));
+        if (matched.length === 0) { resultsBox.innerHTML = '<div class="search-item">Hakuna aliyepatikana</div>'; resultsBox.style.display = 'block'; return; }
         let html = '';
         matched.forEach(item => {
             html += `<div class="search-item" onclick="selectOption(${item.id}, '${item.name}', '${inputId}', '${resultsId}', '${selectId}', ${callbackFunc.name})">${item.name} (${item.phone || 'Hana namba'})</div>`;
@@ -647,28 +827,71 @@
         }
     });
 
-    function savePriceManual() {
-        let farmerId = document.getElementById('tableFarmerSelect').value;
-        let monthStr = document.getElementById('selectMonth').value;
-        let price = parseFloat(document.getElementById('globalPrice').value) || 0;
-        if(!farmerId) return alert('Chagua mfugaji kwanza!');
-        db.prices[`${farmerId}_${monthStr}`] = price;
-        saveDataNow();
-        updateTableTotals();
-        calculateProfitReport();
-        alert('Bei imehifadhiwa kikamilifu!');
+    // --- AUDIT CHECK BY SPECIFIC DATE ---
+    function runAuditCheck(type) {
+        let inputDate = prompt("Weka tarehe unayotaka kuikagua (Mfano: YYYY-MM-DD au k.v 2026-11-04):", todayStr);
+        if(!inputDate) return;
+
+        let parts = inputDate.split('-');
+        if(parts.length !== 3) return alert("Tarehe si sahihi! Tumia muundo wa YYYY-MM-DD (mf. 2026-11-04)");
+
+        let year = parts[0];
+        let month = parts[1];
+        let day = parseInt(parts[2]);
+        let monthStr = `${year}-${month}`;
+        let records = type === 'farmer' ? db.milkRecords : db.customerSales;
+        let list = type === 'farmer' ? db.farmers : db.customers;
+        let resultAreaId = type === 'farmer' ? 'farmerAuditResult' : 'customerAuditResult';
+        let selectId = type === 'farmer' ? 'tableFarmerSelect' : 'customerTableSelect';
+        let monthSelectId = type === 'farmer' ? 'selectMonth' : 'customerSelectMonth';
+        let resultArea = document.getElementById(resultAreaId);
+
+        if(!list || list.length === 0) {
+            resultArea.innerHTML = `Hakuna ${type === 'farmer' ? 'wafugaji' : 'wanunuzi'} waliosajiliwa bado.`;
+            resultArea.style.display = 'block';
+            return;
+        }
+
+        let monthSel = document.getElementById(monthSelectId);
+        if(monthSel) {
+            monthSel.value = monthStr;
+        }
+
+        let missingEntries = [];
+
+        list.forEach(item => {
+            let key = `${item.id}_${monthStr}_${day}`;
+            let rec = records[key];
+            let morEmpty = (!rec || rec.mor === '' || rec.mor === null || rec.mor === undefined);
+            let eveEmpty = (!rec || rec.eve === '' || rec.eve === null || rec.eve === undefined);
+
+            if(morEmpty || eveEmpty) {
+                let missingTime = morEmpty && eveEmpty ? "Asubuhi & Jioni" : (morEmpty ? "Asubuhi" : "Jioni");
+                missingEntries.push({ id: item.id, name: item.name, missing: missingTime });
+            }
+        });
+
+        if(missingEntries.length === 0) {
+            resultArea.innerHTML = `✅ Safi! Wote wamejazwa lita za asubuhi na jioni kwa tarehe <b>${inputDate}</b>.`;
+        } else {
+            let html = `<b>⚠️ Wafuatayo hawajajaziwa lita kwa tarehe ${inputDate}:</b><br><ul style="margin: 5px 0 0 20px; padding:0;">`;
+            missingEntries.forEach(m => {
+                html += `<li><a href="javascript:void(0)" onclick="jumpToRecord('${selectId}', ${m.id}, '${type}')" style="color: #003366; font-weight: bold; text-decoration: underline;">${m.name}</a> (Hajajaziwa: ${m.missing})</li>`;
+            });
+            html += `</ul><small style="color:#d32f2f; font-weight:bold;">👉 Bofya jina kupelekwa moja kwa moja kwenye jedwali lake!</small>`;
+            resultArea.innerHTML = html;
+        }
+        resultArea.style.display = 'block';
     }
 
-    function saveCustomerPriceManual() {
-        let customerId = document.getElementById('customerTableSelect').value;
-        let monthStr = document.getElementById('customerSelectMonth').value;
-        let price = parseFloat(document.getElementById('customerGlobalPrice').value) || 0;
-        if(!customerId) return alert('Chagua mnunuzi kwanza!');
-        db.customerPrices[`${customerId}_${monthStr}`] = price;
-        saveDataNow();
-        updateCustomerTableTotals();
-        calculateProfitReport();
-        alert('Bei ya kuuzia imehifadhiwa!');
+    function jumpToRecord(selectId, id, type) {
+        let sel = document.getElementById(selectId);
+        if(sel) {
+            sel.value = id;
+            if(type === 'farmer') loadFarmerMonthTable();
+            else loadCustomerMonthTable();
+            sel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     }
 
     function loadFarmerMonthTable() {
@@ -678,13 +901,7 @@
         let monthStr = document.getElementById('selectMonth').value;
         let container = document.getElementById('calendarTableContainer');
 
-        if(!farmerId) {
-            container.innerHTML = 'Chagua mfugaji kuona jedwali lake.';
-            return;
-        }
-
-        let priceKey = `${farmerId}_${monthStr}`;
-        document.getElementById('globalPrice').value = db.prices[priceKey] || '';
+        if(!farmerId) { container.innerHTML = 'Chagua mfugaji kuona jedwali lake.'; return; }
 
         let totalDays = getDaysInSelectedMonth('selectMonth');
         let midPoint = Math.ceil(totalDays / 2);
@@ -695,25 +912,20 @@
         for(let day = 1; day <= totalDays; day++) {
             let recordKey = `${farmerId}_${monthStr}_${day}`;
             let data = db.milkRecords[recordKey] || { mor: '', eve: '' };
-            
-            let morValDisplay = (data.mor !== '' && data.mor !== null && data.mor !== undefined) ? data.mor : '';
-            let eveValDisplay = (data.eve !== '' && data.eve !== null && data.eve !== undefined) ? data.eve : '';
+            let morVal = (data.mor !== '' && data.mor !== null && data.mor !== undefined) ? data.mor : '';
+            let eveVal = (data.eve !== '' && data.eve !== null && data.eve !== undefined) ? data.eve : '';
 
             let rowHTML = `<tr>
                 <td><b>${day < 10 ? '0' + day : day}</b></td>
-                <td><input type="number" value="${morValDisplay}" oninput="saveMilkCell(${day}, 'mor', this.value)"></td>
-                <td><input type="number" value="${eveValDisplay}" oninput="saveMilkCell(${day}, 'eve', this.value)"></td>
+                <td><input type="number" value="${morVal}" oninput="saveMilkCell(${day}, 'mor', this.value)"></td>
+                <td><input type="number" value="${eveVal}" oninput="saveMilkCell(${day}, 'eve', this.value)"></td>
             </tr>`;
-
             if(day <= midPoint) html1 += rowHTML;
             else html2 += rowHTML;
         }
-
-        html1 += `</table></div>`;
-        html2 += `</table></div>`;
+        html1 += `</table></div>`; html2 += `</table></div>`;
         container.innerHTML = html1 + html2;
         updateTableTotals();
-        loadAllFarmersTotals();
     }
 
     function saveMilkCell(day, type, val) {
@@ -726,7 +938,6 @@
 
         updateTableTotals();
         loadAllFarmersTotals();
-        calculateProfitReport();
         saveDataDebounced();
     }
 
@@ -735,225 +946,152 @@
         if(!fSel || fSel.offsetParent === null) return;
         let farmerId = fSel.value;
         let monthStr = document.getElementById('selectMonth').value;
-        let price = parseFloat(document.getElementById('globalPrice').value) || 0;
+        let price = parseFloat(db.prices[`${farmerId}_${monthStr}`]) || 1000;
         if(!farmerId) return;
 
         let totalDays = getDaysInSelectedMonth('selectMonth');
         let totalLiters = 0;
         for(let day = 1; day <= totalDays; day++) {
-            let recordKey = `${farmerId}_${monthStr}_${day}`;
-            let data = db.milkRecords[recordKey];
-            if(data) {
-                totalLiters += (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
-            }
+            let data = db.milkRecords[`${farmerId}_${monthStr}_${day}`];
+            if(data) totalLiters += (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
         }
-
-        let totalValue = totalLiters * price;
-        document.getElementById('tableTotalsSummary').innerHTML = `Jumla ya Lita: ${totalLiters} L | Thamani: TZS ${totalValue.toLocaleString()}`;
+        document.getElementById('tableTotalsSummary').innerHTML = `Jumla ya Lita: ${totalLiters} L | Thamani (@${price}): TZS ${(totalLiters * price).toLocaleString()}`;
     }
 
     function loadAllFarmersTotals() {
         let container = document.getElementById('allFarmersTableContainer');
         if(!container || container.offsetParent === null) return;
         let monthStr = document.getElementById('allFarmersMonth').value;
-
         let totalDays = getDaysInSelectedMonth('allFarmersMonth');
         let midPoint = Math.ceil(totalDays / 2);
 
         let html1 = `<div class="table-half"><table><tr><th>Siku</th><th>Mor</th><th>Eve</th><th>Jumla</th></tr>`;
         let html2 = `<div class="table-half"><table><tr><th>Siku</th><th>Mor</th><th>Eve</th><th>Jumla</th></tr>`;
-
         let grandMor = 0, grandEve = 0;
 
         for(let day = 1; day <= totalDays; day++) {
             let dayMor = 0, dayEve = 0;
-            db.farmers.forEach(f => {
-                let rKey = `${f.id}_${monthStr}_${day}`;
-                let rec = db.milkRecords[rKey];
-                if(rec) {
-                    dayMor += parseFloat(rec.mor) || 0;
-                    dayEve += parseFloat(rec.eve) || 0;
-                }
+            (db.farmers || []).forEach(f => {
+                let rec = db.milkRecords[`${f.id}_${monthStr}_${day}`];
+                if(rec) { dayMor += parseFloat(rec.mor) || 0; dayEve += parseFloat(rec.eve) || 0; }
             });
             let dayTotal = dayMor + dayEve;
-            grandMor += dayMor;
-            grandEve += dayEve;
-
-            let rowHTML = `<tr>
-                <td><b>${day < 10 ? '0' + day : day}</b></td>
-                <td>${dayMor > 0 ? dayMor : '0'}</td>
-                <td>${dayEve > 0 ? dayEve : '0'}</td>
-                <td><b>${dayTotal > 0 ? dayTotal : '0'}</b></td>
-            </tr>`;
-
-            if(day <= midPoint) html1 += rowHTML;
-            else html2 += rowHTML;
+            grandMor += dayMor; grandEve += dayEve;
+            let rowHTML = `<tr><td><b>${day < 10 ? '0' + day : day}</b></td><td>${dayMor || 0}</td><td>${dayEve || 0}</td><td><b>${dayTotal || 0}</b></td></tr>`;
+            if(day <= midPoint) html1 += rowHTML; else html2 += rowHTML;
         }
-
-        html1 += `</table></div>`;
-        html2 += `</table></div>`;
+        html1 += `</table></div>`; html2 += `</table></div>`;
         container.innerHTML = html1 + html2;
-
-        let overallTotal = grandMor + grandEve;
-        document.getElementById('allFarmersGrandTotal').innerHTML = `
-            Jumla Kuu ya Maziwa Yote: Asubuhi: ${grandMor} L | Jioni: ${grandEve} L | Jumla: ${overallTotal} L
-        `;
+        document.getElementById('allFarmersGrandTotal').innerHTML = `Jumla Kuu: Asubuhi: ${grandMor} L | Jioni: ${grandEve} L | Jumla: ${grandMor + grandEve} L`;
     }
 
-    function saveDeduction() {
+    function saveAdvanceCash() {
         let farmerId = document.getElementById('deductFarmerSelect').value;
-        let typeEl = document.getElementById('deductType');
-        let type = typeEl ? typeEl.value : 'feed';
+        let amount = parseFloat(document.getElementById('advanceCashAmount').value) || 0;
+        let date = document.getElementById('advanceCashDate').value;
+        if(!farmerId || amount <= 0 || !date) return alert('Jaza kiasi cha advance!');
+        
+        if(!db.deductions) db.deductions = [];
+        db.deductions.push({ id: Date.now(), farmerId, type: 'cash', amount, date });
+        saveDataNow();
+        document.getElementById('advanceCashAmount').value = '';
+        loadFarmerDeductions();
+        alert('Advance cash imehifadhiwa!');
+    }
+
+    function saveFeedDeduction() {
+        if(currentUserRole === 'stationStaff') return alert("Samahani! Msimamizi wa kituo haruhusiwi kuandika bili ya chakula.");
+        let farmerId = document.getElementById('deductFarmerSelect').value;
         let amount = parseFloat(document.getElementById('deductAmount').value) || 0;
         let date = document.getElementById('deductDate').value;
-
-        if(!farmerId || amount <= 0 || !date) return alert('Chagua mfugaji na uweke kiasi sahihi cha pesa!');
+        if(!farmerId || amount <= 0 || !date) return alert('Jaza kiasi cha bili ya chakula!');
         
-        db.deductions.push({ id: Date.now(), farmerId, type, amount, date });
+        if(!db.deductions) db.deductions = [];
+        db.deductions.push({ id: Date.now(), farmerId, type: 'feed', amount, date });
         saveDataNow();
         document.getElementById('deductAmount').value = '';
         loadFarmerDeductions();
-        alert('Bili ya chakula imehifadhiwa kikamilifu!');
-    }
-
-    function editDeduction(id) {
-        let item = db.deductions.find(d => d.id == id);
-        if(!item) return;
-        let newAmount = prompt("Badilisha Kiasi cha Pesa (TZS):", item.amount);
-        if(newAmount !== null && !isNaN(newAmount) && parseFloat(newAmount) > 0) {
-            let newDate = prompt("Badilisha Tarehe (YYYY-MM-DD):", item.date);
-            if(newDate !== null && newDate.trim() !== "") {
-                item.amount = parseFloat(newAmount);
-                item.date = newDate.trim();
-                saveDataNow();
-                loadFarmerDeductions();
-                alert("Bili imerekebishwa!");
-            }
-        }
+        alert('Bili ya chakula imehifadhiwa!');
     }
 
     function deleteDeduction(id) {
-        if(confirm("Je, una uhakika unataka kufuta bili hii?")) {
+        let item = (db.deductions || []).find(d => d.id == id);
+        if(!item) return;
+        if(currentUserRole === 'stationStaff' && item.type === 'feed') return alert("Huwezi kufuta bili ya chakula.");
+        if(currentUserRole === 'shopStaff' && item.type === 'cash') return alert("Huwezi kufuta Advance Cash.");
+        if(confirm("Futa kumbukumbu hii?")) {
             db.deductions = db.deductions.filter(d => d.id != id);
             saveDataNow();
             loadFarmerDeductions();
-            alert("Bili imefutwa!");
+            alert("Imefutwa!");
         }
     }
 
     function loadFarmerDeductions() {
         let fSel = document.getElementById('deductFarmerSelect');
+        let monthSel = document.getElementById('staffViewMonthSelect');
         if(!fSel) return;
         let farmerId = fSel.value;
+        let selectedMonth = monthSel ? monthSel.value : `${currentYear}-${currentMonth < 10 ? '0'+currentMonth : currentMonth}`;
         let area = document.getElementById('deductionsListArea');
-        if(!farmerId) {
-            area.innerHTML = 'Chagua mfugaji kuona historia ya makato...';
-            return;
-        }
-
-        let items = db.deductions.filter(d => d.farmerId == farmerId);
-        if(items.length === 0) {
-            area.innerHTML = 'Hakuna advance au deni la chakula lililorekodiwa.';
-            return;
-        }
-
-        let html = '<b>Historia ya Advance & Chakula:</b><br>';
-        let totalCash = 0, totalFeed = 0;
-        items.forEach(i => {
-            let label = i.type === 'cash' ? 'Advance Cash' : 'Chakula cha Ng\'ombe';
-            let editDelDeduct = `<button class="btn-sm btn-edit" onclick="editDeduction(${i.id})">Badili</button>` +
-                                `<button class="btn-sm btn-del" onclick="deleteDeduction(${i.id})">Futa</button>`;
-
-            html += `- [${i.date}] ${label}: TZS ${i.amount.toLocaleString()} ${editDelDeduct}<br>`;
-            if(i.type === 'cash') totalCash += i.amount;
-            if(i.type === 'feed') totalFeed += i.amount;
-        });
-        html += `<hr><b>Jumla ya Cash:</b> TZS ${totalCash.toLocaleString()} | <b>Jumla ya Chakula:</b> TZS ${totalFeed.toLocaleString()}`;
-        area.innerHTML = html;
-    }
-
-    function calculateFarmerSummary() {
-        let fSel = document.getElementById('calcFarmerSelect');
-        if(!fSel || fSel.offsetParent === null) return;
-        let farmerId = fSel.value;
-        let monthStr = document.getElementById('selectMonth').value;
+        let reportArea = document.getElementById('staffFarmerReportArea');
 
         if(!farmerId) {
-            document.getElementById('sendActionButtons').style.display = 'none';
+            area.innerHTML = 'Chagua mfugaji kuona historia...';
+            reportArea.innerHTML = 'Chagua mfugaji kuona ripoti yake...';
             return;
         }
 
-        let farmer = db.farmers.find(f => f.id == farmerId);
-        currentFarmerPhone = farmer ? farmer.phone : "";
-
-        let price = db.prices[`${farmerId}_${monthStr}`] || 0;
-        let totalDays = getDaysInSelectedMonth('selectMonth');
+        let totalDays = getDaysInSelectedMonth('staffViewMonthSelect');
         let totalLiters = 0;
+        let price = parseFloat(db.prices[`${farmerId}_${selectedMonth}`]) || 1000;
 
         for(let day = 1; day <= totalDays; day++) {
-            let recordKey = `${farmerId}_${monthStr}_${day}`;
-            let data = db.milkRecords[recordKey];
-            if(data) {
-                totalLiters += (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
-            }
+            let rec = db.milkRecords[`${farmerId}_${selectedMonth}_${day}`];
+            if(rec) totalLiters += (parseFloat(rec.mor) || 0) + (parseFloat(rec.eve) || 0);
         }
         let totalMilkValue = totalLiters * price;
 
-        let deductions = db.deductions.filter(d => d.farmerId == farmerId);
+        let farmerDeductions = (db.deductions || []).filter(d => d.farmerId == farmerId);
         let totalCash = 0, totalFeed = 0;
-        deductions.forEach(d => {
+        farmerDeductions.forEach(d => {
             if(d.type === 'cash') totalCash += d.amount;
             if(d.type === 'feed') totalFeed += d.amount;
         });
 
         let netPayable = totalMilkValue - (totalCash + totalFeed);
+        let farmerObj = (db.farmers || []).find(f => f.id == farmerId);
 
-        document.getElementById('farmerResultArea').innerHTML = `
-            <b>Mfugaji:</b> ${farmer.name}<br>
-            <b>Mwezi:</b> ${monthStr}<br>
-            <b>Jumla ya Lita:</b> ${totalLiters} L<br>
-            <b>Thamani ya Maziwa (@ TZS ${price}):</b> TZS ${totalMilkValue.toLocaleString()}<br>
-            <b>Makato ya Advance Cash:</b> TZS ${totalCash.toLocaleString()}<br>
-            <b>Makato ya Chakula:</b> TZS ${totalFeed.toLocaleString()}<br>
+        reportArea.innerHTML = `
+            <b>Ripoti ya Mwezi: ${selectedMonth} | Mfugaji: ${farmerObj ? farmerObj.name : ''}</b><br>
+            • Jumla ya Lita: <b>${totalLiters} L</b><br>
+            • Thamani ya Maziwa (@ TZS ${price}): <b>TZS ${totalMilkValue.toLocaleString()}</b><br>
+            • Advance Cash: TZS ${totalCash.toLocaleString()}<br>
+            • Bili ya Chakula: TZS ${totalFeed.toLocaleString()}<br>
             <hr>
             <b style="color: ${netPayable >= 0 ? 'green' : 'red'}; font-size: 15px;">
-                NET PAYABLE (BAKI YA KULIPWA): TZS ${netPayable.toLocaleString()}
+                PESA ANAYODAI (NET PAYABLE): TZS ${netPayable.toLocaleString()}
             </b>
         `;
 
-        currentInvoiceText = `ROCA INVESTMENT - INVOICE YA MALIPO\n` +
-            `Mfugaji: ${farmer.name}\n` +
-            `Mwezi: ${monthStr}\n` +
-            `Jumla ya Maziwa: ${totalLiters} Lita\n` +
-            `Thamani ya Maziwa: TZS ${totalMilkValue.toLocaleString()}\n` +
-            `Advance Cash: TZS ${totalCash.toLocaleString()}\n` +
-            `Deni la Chakula: TZS ${totalFeed.toLocaleString()}\n` +
-            `------------------------\n` +
-            `BAKI YAKO YA KULIPWA: TZS ${netPayable.toLocaleString()}\n` +
-            `Ahsante kwa ushirikiano!`;
-
-        document.getElementById('sendActionButtons').style.display = 'block';
-    }
-
-    function sendInvoiceWhatsApp() {
-        if(!currentFarmerPhone) return alert('Mfugaji hana namba ya simu!');
-        let cleanPhone = currentFarmerPhone.replace(/[^0-9]/g, '');
-        if(cleanPhone.startsWith('0')) cleanPhone = '255' + cleanPhone.substring(1);
-        let url = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(currentInvoiceText)}`;
-        window.open(url, '_blank');
-    }
-
-    function sendInvoiceSMS() {
-        if(!currentFarmerPhone) return alert('Mfugaji hana namba ya simu!');
-        let cleanPhone = currentFarmerPhone.replace(/[^0-9]/g, '');
-        let url = `sms:${cleanPhone}?body=${encodeURIComponent(currentInvoiceText)}`;
-        window.location.href = url;
+        let html = '<b>Historia ya Bili & Advance:</b><br>';
+        if(farmerDeductions.length === 0) html += 'Hakuna makato yaliyowekwa.<br>';
+        else {
+            farmerDeductions.forEach(i => {
+                let label = i.type === 'cash' ? 'Advance Cash' : 'Chakula cha Ng\'ombe';
+                let canDelete = (currentUserRole === 'admin' || (currentUserRole === 'stationStaff' && i.type === 'cash') || (currentUserRole === 'shopStaff' && i.type === 'feed'));
+                let delBtn = canDelete ? `<button class="btn-sm btn-del" onclick="deleteDeduction(${i.id})">Futa</button>` : '';
+                html += `- [${i.date}] ${label}: TZS ${i.amount.toLocaleString()} ${delBtn}<br>`;
+            });
+        }
+        area.innerHTML = html;
     }
 
     function loadCustomerMonthTable() {
         let customerId = document.getElementById('customerTableSelect').value;
         let monthStr = document.getElementById('customerSelectMonth').value;
         let container = document.getElementById('customerTableContainer');
+        if(!container || container.offsetParent === null) return;
 
         if(!customerId) {
             container.innerHTML = 'Chagua mnunuzi kuona jedwali lake.';
@@ -973,22 +1111,17 @@
         for(let day = 1; day <= totalDays; day++) {
             let recordKey = `${customerId}_${monthStr}_${day}`;
             let data = db.customerSales[recordKey] || { mor: '', eve: '' };
-            
-            let morValDisplay = (data.mor !== '' && data.mor !== null && data.mor !== undefined) ? data.mor : '';
-            let eveValDisplay = (data.eve !== '' && data.eve !== null && data.eve !== undefined) ? data.eve : '';
+            let morVal = (data.mor !== '' && data.mor !== null && data.mor !== undefined) ? data.mor : '';
+            let eveVal = (data.eve !== '' && data.eve !== null && data.eve !== undefined) ? data.eve : '';
 
             let rowHTML = `<tr>
                 <td><b>${day < 10 ? '0' + day : day}</b></td>
-                <td><input type="number" value="${morValDisplay}" oninput="saveCustomerCell(${day}, 'mor', this.value)"></td>
-                <td><input type="number" value="${eveValDisplay}" oninput="saveCustomerCell(${day}, 'eve', this.value)"></td>
+                <td><input type="number" value="${morVal}" oninput="saveCustomerCell(${day}, 'mor', this.value)"></td>
+                <td><input type="number" value="${eveVal}" oninput="saveCustomerCell(${day}, 'eve', this.value)"></td>
             </tr>`;
-
-            if(day <= midPoint) html1 += rowHTML;
-            else html2 += rowHTML;
+            if(day <= midPoint) html1 += rowHTML; else html2 += rowHTML;
         }
-
-        html1 += `</table></div>`;
-        html2 += `</table></div>`;
+        html1 += `</table></div>`; html2 += `</table></div>`;
         container.innerHTML = html1 + html2;
         updateCustomerTableTotals();
         loadCustomerCashHistory();
@@ -1003,75 +1136,46 @@
         db.customerSales[recordKey][type] = val === '' ? '' : parseFloat(val);
 
         updateCustomerTableTotals();
-        calculateProfitReport();
         saveDataDebounced();
+    }
+
+    function saveCustomerPriceManual() {
+        let customerId = document.getElementById('customerTableSelect').value;
+        let monthStr = document.getElementById('customerSelectMonth').value;
+        let price = parseFloat(document.getElementById('customerGlobalPrice').value) || 0;
+        if(!customerId) return alert('Chagua mnunuzi kwanza!');
+        db.customerPrices[`${customerId}_${monthStr}`] = price;
+        saveDataNow();
+        updateCustomerTableTotals();
+        if(currentUserRole === 'admin') loadAllCustomersReport();
+        alert('Bei ya kuuzia imehifadhiwa!');
     }
 
     function saveCustomerCashPayment() {
         let customerId = document.getElementById('customerTableSelect').value;
         let amount = parseFloat(document.getElementById('cCashAmount').value) || 0;
         let date = document.getElementById('cCashDate').value;
-
         if(!customerId || amount <= 0 || !date) return alert('Jaza taarifa sahihi za cash!');
 
         db.customerPayments.push({ id: Date.now(), customerId, amount, date });
         saveDataNow();
         document.getElementById('cCashAmount').value = '';
         loadCustomerCashHistory();
+        if(currentUserRole === 'admin') loadAllCustomersReport();
         alert('Malipo ya cash yamerekodiwa!');
-    }
-
-    function editCustomerCashPayment(id) {
-        let item = db.customerPayments.find(p => p.id == id);
-        if(!item) return;
-        let newAmount = prompt("Badilisha Kiasi cha Cash (TZS):", item.amount);
-        if(newAmount !== null && !isNaN(newAmount) && parseFloat(newAmount) > 0) {
-            let newDate = prompt("Badilisha Tarehe (YYYY-MM-DD):", item.date);
-            if(newDate !== null && newDate.trim() !== "") {
-                item.amount = parseFloat(newAmount);
-                item.date = newDate.trim();
-                saveDataNow();
-                loadCustomerCashHistory();
-                alert("Malipo ya cash yamehaririwa kikamilifu!");
-            }
-        }
-    }
-
-    function deleteCustomerCashPayment(id) {
-        if(confirm("Je, una uhakika unataka kufuta malipo haya ya cash?")) {
-            db.customerPayments = db.customerPayments.filter(p => p.id != id);
-            saveDataNow();
-            loadCustomerCashHistory();
-            alert("Malipo yamefutwa!");
-        }
     }
 
     function loadCustomerCashHistory() {
         let customerId = document.getElementById('customerTableSelect').value;
         let monthStr = document.getElementById('customerSelectMonth').value;
         let area = document.getElementById('customerCashHistoryArea');
-        
-        if(!customerId) {
-            area.innerHTML = 'Chagua mnunuzi kuona historia...';
-            return;
-        }
+        if(!area || area.offsetParent === null) return;
+        if(!customerId) { area.innerHTML = 'Chagua mnunuzi kuona historia...'; return; }
 
-        let payments = db.customerPayments.filter(p => p.customerId == customerId && p.date && p.date.startsWith(monthStr));
-        let html = '<b>Historia ya Malipo ya Cash (Mwezi Huu):</b><br>';
-        let totalPaid = 0;
-
-        if(payments.length === 0) {
-            html += 'Hakuna malipo ya cash yaliyowekwa kwa mwezi huu.<br>';
-        } else {
-            payments.forEach(p => {
-                let editDelCash = !isStaffMode ? 
-                    `<button class="btn-sm btn-edit" onclick="editCustomerCashPayment(${p.id})">Badili</button>` +
-                    `<button class="btn-sm btn-del" onclick="deleteCustomerCashPayment(${p.id})">Futa</button>` : '';
-
-                html += `- [${p.date}] TZS ${p.amount.toLocaleString()} ${editDelCash}<br>`;
-                totalPaid += p.amount;
-            });
-        }
+        let payments = (db.customerPayments || []).filter(p => p.customerId == customerId && p.date && p.date.startsWith(monthStr));
+        let html = '<b>Historia ya Malipo ya Cash:</b><br>';
+        if(payments.length === 0) html += 'Hakuna malipo ya cash yaliyowekwa.<br>';
+        else payments.forEach(p => { html += `- [${p.date}] TZS ${p.amount.toLocaleString()}<br>`; });
         area.innerHTML = html;
         updateCustomerTableTotals();
     }
@@ -1081,6 +1185,7 @@
         let monthStr = document.getElementById('customerSelectMonth').value;
         let price = parseFloat(document.getElementById('customerGlobalPrice').value) || 0;
         let summaryEl = document.getElementById('customerTotalsSummary');
+        if(!summaryEl || summaryEl.offsetParent === null) return;
 
         if(!customerId) {
             summaryEl.innerHTML = 'Jumla Lita: 0 L | Bill: TZS 0 | Imelipwa Cash: TZS 0 | Salio: TZS 0';
@@ -1090,38 +1195,156 @@
         let totalDays = getDaysInSelectedMonth('customerSelectMonth');
         let totalLiters = 0;
         for(let day = 1; day <= totalDays; day++) {
-            let recordKey = `${customerId}_${monthStr}_${day}`;
-            let data = db.customerSales[recordKey];
-            if(data) {
-                totalLiters += (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
-            }
+            let data = db.customerSales[`${customerId}_${monthStr}_${day}`];
+            if(data) totalLiters += (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
         }
 
         let totalPaid = 0;
-        db.customerPayments.filter(p => p.customerId == customerId && p.date && p.date.startsWith(monthStr)).forEach(p => {
+        (db.customerPayments || []).filter(p => p.customerId == customerId && p.date && p.date.startsWith(monthStr)).forEach(p => {
             totalPaid += p.amount;
         });
-
-        if(totalLiters === 0 && totalPaid === 0) {
-            summaryEl.innerHTML = 'Hakuna kumbukumbu za mauzo au malipo kwa mwezi huu.';
-            return;
-        }
 
         let totalBill = totalLiters * price;
         let balanceDue = totalBill - totalPaid;
 
-        summaryEl.innerHTML = `
-            Jumla Lita: ${totalLiters} L | Bill: TZS ${totalBill.toLocaleString()} | Imelipwa Cash: TZS ${totalPaid.toLocaleString()} | <span style="color:${balanceDue>0?'red':'green'}">Salio Anayodaiwa: TZS ${balanceDue.toLocaleString()}</span>
+        summaryEl.innerHTML = `Jumla Lita: ${totalLiters} L | Bill: TZS ${totalBill.toLocaleString()} | Imelipwa Cash: TZS ${totalPaid.toLocaleString()} | <span style="color:${balanceDue>0?'red':'green'}">Salio: TZS ${balanceDue.toLocaleString()}</span>`;
+    }
+
+    // --- RIPOTI KUU YA WANUNUZI WOTE (ADMIN) ---
+    function loadAllCustomersReport() {
+        let container = document.getElementById('allCustomersReportTableContainer');
+        let summaryEl = document.getElementById('allCustomersGrandSummary');
+        let monthSel = document.getElementById('allCustomersReportMonth');
+        if(!container || container.offsetParent === null) return;
+
+        let monthStr = monthSel ? monthSel.value : `${currentYear}-${currentMonth < 10 ? '0'+currentMonth : currentMonth}`;
+        let totalDays = getDaysInSelectedMonth('allCustomersReportMonth');
+
+        let html = `<table>
+            <thead>
+                <tr style="background: #003366; color: white;">
+                    <th>Jina la Mnunuzi</th>
+                    <th>Jumla Lita</th>
+                    <th>Bei/Lita</th>
+                    <th>Jumla ya Bill</th>
+                    <th>Imelipwa Cash</th>
+                    <th>Salio la Kudai</th>
+                    <th>Vitendo</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        let grandLiters = 0;
+        let grandBill = 0;
+        let grandPaid = 0;
+        let grandBalance = 0;
+
+        if(!db.customers || db.customers.length === 0) {
+            container.innerHTML = 'Hakuna wanunuzi waliosajiliwa bado.';
+            summaryEl.innerHTML = 'Jumla Kuu ya Mauzo: 0 L | Bili: TZS 0 | Imelipwa: TZS 0 | Salio la Kudai: TZS 0';
+            return;
+        }
+
+        db.customers.forEach(c => {
+            let price = parseFloat(db.customerPrices[`${c.id}_${monthStr}`]) || 0;
+            let liters = 0;
+            for(let day = 1; day <= totalDays; day++) {
+                let rec = db.customerSales[`${c.id}_${monthStr}_${day}`];
+                if(rec) liters += (parseFloat(rec.mor) || 0) + (parseFloat(rec.eve) || 0);
+            }
+
+            let paid = 0;
+            (db.customerPayments || []).filter(p => p.customerId == c.id && p.date && p.date.startsWith(monthStr)).forEach(p => {
+                paid += p.amount;
+            });
+
+            let bill = liters * price;
+            let balance = bill - paid;
+
+            grandLiters += liters;
+            grandBill += bill;
+            grandPaid += paid;
+            grandBalance += balance;
+
+            let cleanPhone = c.phone ? c.phone.replace(/[^0-9]/g, '') : '';
+            if(cleanPhone.startsWith('0')) cleanPhone = '255' + cleanPhone.substring(1);
+            let msgText = `ROCA INVESTMENT - TAARIFA YA DENI\nMteja: ${c.name}\nMwezi: ${monthStr}\nJumla Lita: ${liters} L\nBili: TZS ${bill.toLocaleString()}\nImelipwa: TZS ${paid.toLocaleString()}\nSalio Linalodaiwa: TZS ${balance.toLocaleString()}`;
+
+            let actionBtns = '-';
+            if(cleanPhone) {
+                actionBtns = `<button class="btn-sm" style="background:#25D366; color:white; padding:3px 6px;" onclick="window.open('https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(msgText)}','_blank')">WhatsApp</button>`;
+            }
+
+            html += `<tr>
+                <td style="text-align: left; padding: 5px;"><b>${c.name}</b></td>
+                <td>${liters} L</td>
+                <td>${price.toLocaleString()}</td>
+                <td>TZS ${bill.toLocaleString()}</td>
+                <td>TZS ${paid.toLocaleString()}</td>
+                <td style="color: ${balance > 0 ? 'red' : 'green'}; font-weight: bold;">TZS ${balance.toLocaleString()}</td>
+                <td>${actionBtns}</td>
+            </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+        summaryEl.innerHTML = `Jumla Kuu ya Mauzo: <b>${grandLiters} L</b> | Bili: <b>TZS ${grandBill.toLocaleString()}</b> | Imelipwa: <b>TZS ${grandPaid.toLocaleString()}</b> | <span style="color:${grandBalance>0?'red':'green'}">Salio la Kudai: TZS ${grandBalance.toLocaleString()}</span>`;
+    }
+
+    function calculateFarmerSummary() {
+        let fSel = document.getElementById('calcFarmerSelect');
+        if(!fSel) return;
+        let farmerId = fSel.value;
+        let monthStr = document.getElementById('selectMonth').value;
+        if(!farmerId) return;
+
+        let farmer = (db.farmers || []).find(f => f.id == farmerId);
+        currentFarmerPhone = farmer ? farmer.phone : "";
+        let price = parseFloat(db.prices[`${farmerId}_${monthStr}`]) || 1000;
+        let totalDays = getDaysInSelectedMonth('selectMonth');
+        let totalLiters = 0;
+
+        for(let day = 1; day <= totalDays; day++) {
+            let data = db.milkRecords[`${farmerId}_${monthStr}_${day}`];
+            if(data) totalLiters += (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
+        }
+        let totalMilkValue = totalLiters * price;
+        let deductions = (db.deductions || []).filter(d => d.farmerId == farmerId);
+        let totalCash = 0, totalFeed = 0;
+        deductions.forEach(d => { if(d.type === 'cash') totalCash += d.amount; if(d.type === 'feed') totalFeed += d.amount; });
+        let netPayable = totalMilkValue - (totalCash + totalFeed);
+
+        document.getElementById('farmerResultArea').innerHTML = `
+            <b>Mfugaji:</b> ${farmer.name}<br>
+            <b>Mwezi:</b> ${monthStr}<br>
+            <b>Jumla ya Lita:</b> ${totalLiters} L<br>
+            <b>Thamani ya Maziwa:</b> TZS ${totalMilkValue.toLocaleString()}<br>
+            <b>Advance Cash:</b> TZS ${totalCash.toLocaleString()}<br>
+            <b>Bili ya Chakula:</b> TZS ${totalFeed.toLocaleString()}<br>
+            <hr>
+            <b style="color: ${netPayable >= 0 ? 'green' : 'red'}; font-size: 15px;">NET PAYABLE: TZS ${netPayable.toLocaleString()}</b>
         `;
+        currentInvoiceText = `ROCA INVESTMENT - INVOICE\nMfugaji: ${farmer.name}\nMwezi: ${monthStr}\nJumla Lita: ${totalLiters} L\nNet Payable: TZS ${netPayable.toLocaleString()}`;
+        document.getElementById('sendActionButtons').style.display = 'block';
+    }
+
+    function sendInvoiceWhatsApp() {
+        if(!currentFarmerPhone) return alert('Mfugaji hana namba ya simu!');
+        let cleanPhone = currentFarmerPhone.replace(/[^0-9]/g, '');
+        if(cleanPhone.startsWith('0')) cleanPhone = '255' + cleanPhone.substring(1);
+        window.open(`https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(currentInvoiceText)}`, '_blank');
+    }
+
+    function sendInvoiceSMS() {
+        if(!currentFarmerPhone) return alert('Mfugaji hana namba ya simu!');
+        window.location.href = `sms:${currentFarmerPhone.replace(/[^0-9]/g, '')}?body=${encodeURIComponent(currentInvoiceText)}`;
     }
 
     function saveExpense() {
         let desc = document.getElementById('expDesc').value;
         let amount = parseFloat(document.getElementById('expAmount').value) || 0;
         let date = document.getElementById('expDate').value;
-
         if(!desc || amount <= 0 || !date) return alert('Jaza maelezo na kiasi!');
-
         db.expenses.push({ id: Date.now(), desc, amount, date });
         saveDataNow();
         document.getElementById('expDesc').value = '';
@@ -1131,55 +1354,14 @@
         alert('Matumizi yamerekodiwa!');
     }
 
-    function editExpense(id) {
-        let item = db.expenses.find(e => e.id == id);
-        if(!item) return;
-        
-        let newDesc = prompt("Badilisha Aina ya Matumizi:", item.desc);
-        if(newDesc !== null && newDesc.trim() !== "") {
-            let newAmount = prompt("Badilisha Kiasi cha Pesa (TZS):", item.amount);
-            if(newAmount !== null && !isNaN(newAmount) && parseFloat(newAmount) > 0) {
-                let newDate = prompt("Badilisha Tarehe (YYYY-MM-DD):", item.date);
-                if(newDate !== null && newDate.trim() !== "") {
-                    item.desc = newDesc.trim();
-                    item.amount = parseFloat(newAmount);
-                    item.date = newDate.trim();
-                    
-                    saveDataNow();
-                    loadExpensesList();
-                    calculateProfitReport();
-                    alert("Taarifa za matumizi zimehaririwa kikamilifu!");
-                }
-            }
-        }
-    }
-
-    function deleteExpense(id) {
-        if(confirm("Je, una uhakika unataka kufuta matumizi haya?")) {
-            db.expenses = db.expenses.filter(e => e.id != id);
-            saveDataNow();
-            loadExpensesList();
-            calculateProfitReport();
-            alert("Matumizi yamefutwa!");
-        }
-    }
-
     function loadExpensesList() {
         let area = document.getElementById('expensesListArea');
         if(!area || area.offsetParent === null) return;
-        if(db.expenses.length === 0) {
-            area.innerHTML = 'Hakuna matumizi...';
-            return;
-        }
-
+        if((db.expenses || []).length === 0) { area.innerHTML = 'Hakuna matumizi...'; return; }
         let html = '<b>Orodha ya Matumizi:</b><br>';
         let totalExp = 0;
         db.expenses.forEach(e => {
-            let editDelExpense = !isStaffMode ? 
-                `<button class="btn-sm btn-edit" onclick="editExpense(${e.id})">Badili</button>` +
-                `<button class="btn-sm btn-del" onclick="deleteExpense(${e.id})">Futa</button>` : '';
-
-            html += `- [${e.date}] ${e.desc}: TZS ${e.amount.toLocaleString()} ${editDelExpense}<br>`;
+            html += `- [${e.date}] ${e.desc}: TZS ${e.amount.toLocaleString()}<br>`;
             totalExp += e.amount;
         });
         html += `<hr><b>Jumla ya Matumizi:</b> TZS ${totalExp.toLocaleString()}`;
@@ -1189,59 +1371,45 @@
     function calculateProfitReport() {
         let area = document.getElementById('profitArea');
         let profitMonthSel = document.getElementById('profitMonthSelect');
-        if(!area || !profitMonthSel) return;
-        
+        if(!area || !profitMonthSel || area.offsetParent === null) return;
         let selectedMonth = profitMonthSel.value;
+        let totalDays = getDaysInSelectedMonth('profitMonthSelect');
 
         let totalBuyingCost = 0;
-        for(let key in db.milkRecords) {
-            let parts = key.split('_');
-            let farmerId = parts[0];
-            let monthStr = parts[1];
-            
-            if(monthStr === selectedMonth) {
-                let price = db.prices[`${farmerId}_${monthStr}`] || 0;
-                let data = db.milkRecords[key];
-                let l = (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
-                totalBuyingCost += l * price;
+        (db.farmers || []).forEach(f => {
+            let price = parseFloat(db.prices[`${f.id}_${selectedMonth}`]) || 1000;
+            let farmerLiters = 0;
+            for(let day = 1; day <= totalDays; day++) {
+                let rec = db.milkRecords[`${f.id}_${selectedMonth}_${day}`];
+                if(rec) farmerLiters += (parseFloat(rec.mor) || 0) + (parseFloat(rec.eve) || 0);
             }
-        }
-
-        let totalSalesRevenue = 0;
-        for(let key in db.customerSales) {
-            let parts = key.split('_');
-            let customerId = parts[0];
-            let monthStr = parts[1];
-            
-            if(monthStr === selectedMonth) {
-                let price = db.customerPrices[`${customerId}_${monthStr}`] || 0;
-                let data = db.customerSales[key];
-                let l = (parseFloat(data.mor) || 0) + (parseFloat(data.eve) || 0);
-                totalSalesRevenue += l * price;
-            }
-        }
-
-        let grossProfit = totalSalesRevenue - totalBuyingCost;
-
-        let totalExpenses = 0;
-        db.expenses.forEach(e => {
-            if(e.date && e.date.startsWith(selectedMonth)) {
-                totalExpenses += e.amount;
-            }
+            totalBuyingCost += farmerLiters * price;
         });
 
+        let totalSalesRevenue = 0;
+        (db.customers || []).forEach(c => {
+            let price = parseFloat(db.customerPrices[`${c.id}_${selectedMonth}`]) || 0;
+            let customerLiters = 0;
+            for(let day = 1; day <= totalDays; day++) {
+                let rec = db.customerSales[`${c.id}_${selectedMonth}_${day}`];
+                if(rec) customerLiters += (parseFloat(rec.mor) || 0) + (parseFloat(rec.eve) || 0);
+            }
+            totalSalesRevenue += customerLiters * price;
+        });
+
+        let grossProfit = totalSalesRevenue - totalBuyingCost;
+        let totalExpenses = 0;
+        (db.expenses || []).forEach(e => { if(e.date && e.date.startsWith(selectedMonth)) totalExpenses += e.amount; });
         let netProfit = grossProfit - totalExpenses;
 
         area.innerHTML = `
-            <b>Mwezi Uliochaguliwa:</b> ${selectedMonth}<br>
-            <b>Jumla ya Gharama za Kununulia Maziwa:</b> TZS ${totalBuyingCost.toLocaleString()}<br>
-            <b>Jumla ya Mapato ya Kuuzia Maziwa:</b> TZS ${totalSalesRevenue.toLocaleString()}<br>
-            <b>Faida Ghafi (Gross Profit):</b> TZS ${grossProfit.toLocaleString()}<br>
-            <b>Jumla ya Matumizi ya Mwezi Huu:</b> TZS ${totalExpenses.toLocaleString()}<br>
+            <b>Mwezi:</b> ${selectedMonth}<br>
+            <b>Jumla ya Kununulia Maziwa:</b> TZS ${totalBuyingCost.toLocaleString()}<br>
+            <b>Jumla ya Mauzo:</b> TZS ${totalSalesRevenue.toLocaleString()}<br>
+            <b>Faida Ghafi:</b> TZS ${grossProfit.toLocaleString()}<br>
+            <b>Jumla ya Matumizi:</b> TZS ${totalExpenses.toLocaleString()}<br>
             <hr>
-            <b style="color: ${netProfit >= 0 ? 'green' : 'red'}; font-size: 16px;">
-                FAIDA HALISI (NET PROFIT): TZS ${netProfit.toLocaleString()}
-            </b>
+            <b style="color: ${netProfit >= 0 ? 'green' : 'red'}; font-size: 16px;">FAIDA HALISI: TZS ${netProfit.toLocaleString()}</b>
         `;
     }
 
@@ -1249,3 +1417,5 @@
 </script>
 </body>
 </html>
+
+Naitaji niweze edit majina ya wafugaji na wanunuzi na namba zao za simu pia kutuma sms ya bill kwa wanunuzi
