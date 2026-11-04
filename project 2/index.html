@@ -1069,15 +1069,19 @@
         for(let d = 1; d <= totalDays; d++) {
             let key = `${fId}_${monthStr}_${d}`;
             let rec = db.milkRecords[key] || { mor: '', eve: '' };
-            totalLiters += (parseFloat(rec.mor) || 0) + (parseFloat(rec.eve) || 0);
             
-            let row = `<tr><td><b>${d < 10 ? '0'+d : d}</b></td><td><input type="number" value="${rec.mor}" ${isShopStaff ? 'disabled' : ''} oninput="saveMilk(${d}, 'mor', this.value)"></td><td><input type="number" value="${rec.eve}" ${isShopStaff ? 'disabled' : ''} oninput="saveMilk(${d}, 'eve', this.value)"></td></tr>`;
+            let mVal = (rec.mor !== undefined && rec.mor !== null) ? rec.mor : '';
+            let eVal = (rec.eve !== undefined && rec.eve !== null) ? rec.eve : '';
+            
+            totalLiters += (parseFloat(mVal) || 0) + (parseFloat(eVal) || 0);
+            
+            let row = `<tr><td><b>${d < 10 ? '0'+d : d}</b></td><td><input type="text" inputmode="decimal" value="${mVal}" ${isShopStaff ? 'disabled' : ''} oninput="saveMilk(${d}, 'mor', this.value)"></td><td><input type="text" inputmode="decimal" value="${eVal}" ${isShopStaff ? 'disabled' : ''} oninput="saveMilk(${d}, 'eve', this.value)"></td></tr>`;
             if(d <= mid) h1 += row; else h2 += row;
         }
         h1 += `</table></div>`; h2 += `</table></div>`;
         container.innerHTML = h1 + h2;
         
-        document.getElementById('tableTotalLitersVal').innerText = totalLiters + ' L';
+        document.getElementById('tableTotalLitersVal').innerText = (Math.round(totalLiters * 100) / 100) + ' L';
         document.getElementById('tableThamaniVal').innerText = `Thamani: TZS ${(totalLiters * price).toLocaleString()}`;
     }
 
@@ -1087,7 +1091,10 @@
         let monthStr = document.getElementById('selectMonth').value;
         let key = `${fId}_${monthStr}_${day}`;
         if(!db.milkRecords[key]) db.milkRecords[key] = { mor: '', eve: '' };
-        db.milkRecords[key][type] = val === '' ? '' : parseFloat(val);
+        
+        // Geuza koma (,) kuwa nukta (.) iwapo kibodi imetoa koma
+        let cleanVal = val.replace(',', '.');
+        db.milkRecords[key][type] = cleanVal;
         saveDataDebounced();
     }
 
@@ -1112,7 +1119,7 @@
         deds.forEach(d => { if(d.type === 'cash') cash += d.amount; else feed += d.amount; });
         let net = milkVal - (cash + feed);
 
-        let msg = `Habari ${farmer.name}, Hii ni ripoti yako ya maziwa ya ${monthStr} kutoka Roca Investment:\n\n- Jumla ya Lita: ${totalLiters} L\n- Bei/Lita: ${price.toLocaleString()} TZS\n- Thamani ya Maziwa: TZS ${milkVal.toLocaleString()}\n- Chakula: TZS ${feed.toLocaleString()}\n- Advance: TZS ${cash.toLocaleString()}\n\n*Salio Linalolipwa (Net): TZS ${net.toLocaleString()}*\n\nAsante!`;
+        let msg = `Habari ${farmer.name}, Hii ni ripoti yako ya maziwa ya ${monthStr} kutoka Roca Investment:\n\n- Jumla ya Lita: ${(Math.round(totalLiters * 100) / 100)} L\n- Bei/Lita: ${price.toLocaleString()} TZS\n- Thamani ya Maziwa: TZS ${milkVal.toLocaleString()}\n- Chakula: TZS ${feed.toLocaleString()}\n- Advance: TZS ${cash.toLocaleString()}\n\n*Salio Linalolipwa (Net): TZS ${net.toLocaleString()}*\n\nAsante!`;
         
         let phone = farmer.phone ? farmer.phone.replace(/[^0-9]/g, '') : '';
         let url = phone ? `https://wa.me/${phone}?text=` + encodeURIComponent(msg) : `https://api.whatsapp.com/send?text=` + encodeURIComponent(msg);
@@ -1136,12 +1143,12 @@
                 if(rec) { m += parseFloat(rec.mor) || 0; ev += parseFloat(rec.eve) || 0; }
             });
             gMor += m; gEve += ev;
-            let row = `<tr><td><b>${d < 10 ? '0'+d : d}</b></td><td>${m}</td><td>${ev}</td><td><b>${m+ev}</b></td></tr>`;
+            let row = `<tr><td><b>${d < 10 ? '0'+d : d}</b></td><td>${m}</td><td>${ev}</td><td><b>${(Math.round((m+ev) * 100) / 100)}</b></td></tr>`;
             if(d <= mid) h1 += row; else h2 += row;
         }
         h1 += `</table></div>`; h2 += `</table></div>`;
         container.innerHTML = h1 + h2;
-        document.getElementById('allFarmersGrandTotal').innerHTML = `Jumla Kuu: Asb: ${gMor} L | Jioni: ${gEve} L | Jumla: ${gMor + gEve} L`;
+        document.getElementById('allFarmersGrandTotal').innerHTML = `Jumla Kuu: Asb: ${Math.round(gMor*100)/100} L | Jioni: ${Math.round(gEve*100)/100} L | Jumla: ${Math.round((gMor + gEve)*100)/100} L`;
     }
 
     function loadCustomerMonthTable() {
@@ -1165,8 +1172,12 @@
         for(let d = 1; d <= totalDays; d++) {
             let key = `${cId}_${monthStr}_${d}`;
             let rec = db.customerSales[key] || { mor: '', eve: '' };
-            totalLiters += (parseFloat(rec.mor) || 0) + (parseFloat(rec.eve) || 0);
-            let row = `<tr><td><b>${d < 10 ? '0'+d : d}</b></td><td><input type="number" value="${rec.mor}" oninput="saveCustSale(${d}, 'mor', this.value)"></td><td><input type="number" value="${rec.eve}" oninput="saveCustSale(${d}, 'eve', this.value)"></td></tr>`;
+            let mVal = (rec.mor !== undefined && rec.mor !== null) ? rec.mor : '';
+            let eVal = (rec.eve !== undefined && rec.eve !== null) ? rec.eve : '';
+            
+            totalLiters += (parseFloat(mVal) || 0) + (parseFloat(eVal) || 0);
+            
+            let row = `<tr><td><b>${d < 10 ? '0'+d : d}</b></td><td><input type="text" inputmode="decimal" value="${mVal}" oninput="saveCustSale(${d}, 'mor', this.value)"></td><td><input type="text" inputmode="decimal" value="${eVal}" oninput="saveCustSale(${d}, 'eve', this.value)"></td></tr>`;
             if(d <= mid) h1 += row; else h2 += row;
         }
         h1 += `</table></div>`; h2 += `</table></div>`;
@@ -1177,7 +1188,7 @@
         let bill = totalLiters * price;
         let balance = bill - totalPaid;
 
-        document.getElementById('custTotalLitersVal').innerText = totalLiters + ' L';
+        document.getElementById('custTotalLitersVal').innerText = (Math.round(totalLiters * 100) / 100) + ' L';
         document.getElementById('customerTotalsSummary').innerHTML = `Bill: TZS ${bill.toLocaleString()} | Imelipwa: TZS ${totalPaid.toLocaleString()} | <span style="color:${balance>0?'red':'green'}">Salio: TZS ${balance.toLocaleString()}</span>`;
         loadCustomerCashHistory();
     }
@@ -1185,9 +1196,11 @@
     function saveCustSale(day, type, val) {
         let cId = document.getElementById('customerTableSelect').value;
         let monthStr = document.getElementById('customerSelectMonth').value;
-        let key = `${cId}_${monthStr}_${d}`;
+        let key = `${cId}_${monthStr}_${day}`;
         if(!db.customerSales[key]) db.customerSales[key] = { mor: '', eve: '' };
-        db.customerSales[key][type] = val === '' ? '' : parseFloat(val);
+        
+        let cleanVal = val.replace(',', '.');
+        db.customerSales[key][type] = cleanVal;
         saveDataDebounced();
     }
 
@@ -1247,11 +1260,11 @@
             let bal = bill - paid;
 
             gL += l; gB += bill; gP += paid; gS += bal;
-            html += `<tr><td><b>${c.name}</b></td><td>${l} L</td><td>TZS ${bill.toLocaleString()}</td><td>TZS ${paid.toLocaleString()}</td><td style="color:${bal>0?'red':'green'}">TZS ${bal.toLocaleString()}</td></tr>`;
+            html += `<tr><td><b>${c.name}</b></td><td>${(Math.round(l * 100) / 100)} L</td><td>TZS ${bill.toLocaleString()}</td><td>TZS ${paid.toLocaleString()}</td><td style="color:${bal>0?'red':'green'}">TZS ${bal.toLocaleString()}</td></tr>`;
         });
         html += `</tbody></table>`;
         container.innerHTML = html;
-        summaryEl.innerHTML = `Jumla Kuu: ${gL} L | Bill: TZS ${gB.toLocaleString()} | Salio: TZS ${gS.toLocaleString()}`;
+        summaryEl.innerHTML = `Jumla Kuu: ${(Math.round(gL * 100) / 100)} L | Bill: TZS ${gB.toLocaleString()} | Salio: TZS ${gS.toLocaleString()}`;
     }
 
     function saveFarmerDeductionGeneric() {
@@ -1295,7 +1308,7 @@
         deds.forEach(d => { if(d.type === 'cash') cash += d.amount; else feed += d.amount; });
         let net = milkVal - (cash + feed);
 
-        reportArea.innerHTML = `Lita: <b>${totalLiters} L</b> | Thamani: TZS ${milkVal.toLocaleString()} | Advance: TZS ${cash.toLocaleString()} | Chakula: TZS ${feed.toLocaleString()}<br><b style="color:${net>=0?'green':'red'}">Net Payable: TZS ${net.toLocaleString()}</b>`;
+        reportArea.innerHTML = `Lita: <b>${(Math.round(totalLiters * 100) / 100)} L</b> | Thamani: TZS ${milkVal.toLocaleString()} | Advance: TZS ${cash.toLocaleString()} | Chakula: TZS ${feed.toLocaleString()}<br><b style="color:${net>=0?'green':'red'}">Net Payable: TZS ${net.toLocaleString()}</b>`;
         
         let html = '<b>Historia ya Makato & Bili:</b><br>';
         deds.forEach(d => { 
@@ -1386,11 +1399,11 @@
             }
         });
 
-        document.getElementById('repTotalLitersIn').innerText = lIn + ' L';
-        document.getElementById('repTotalLitersOut').innerText = lOut + ' L';
-        document.getElementById('repLitersDiff').innerText = (lIn - lOut) + ' L';
-        document.getElementById('dashLitersIn').innerText = lIn;
-        document.getElementById('dashLitersOut').innerText = lOut;
+        document.getElementById('repTotalLitersIn').innerText = (Math.round(lIn * 100) / 100) + ' L';
+        document.getElementById('repTotalLitersOut').innerText = (Math.round(lOut * 100) / 100) + ' L';
+        document.getElementById('repLitersDiff').innerText = (Math.round((lIn - lOut) * 100) / 100) + ' L';
+        document.getElementById('dashLitersIn').innerText = (Math.round(lIn * 100) / 100);
+        document.getElementById('dashLitersOut').innerText = (Math.round(lOut * 100) / 100);
         document.getElementById('dashExpenses').innerText = exp.toLocaleString();
     }
 
